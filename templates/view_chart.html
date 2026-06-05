@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>زایچه {{ chart.name }} - نجوم</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .chart-container { max-width: 1000px; margin: 20px auto; padding: 15px; }
+        .chart-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4a90e2; padding-bottom: 10px; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; }
+        .info-table td { padding: 8px; border: 1px solid #ddd; }
+        .info-table td:first-child { background: #f8f9fa; font-weight: bold; width: 30%; }
+        .section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .section h3 { margin-top: 0; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="chart-header">
+            <h1>🌟 زایچه {{ chart.name }}</h1>
+            <p>شناسه: {{ chart.id }} | ذخیره شده در: {{ chart.created_at }}</p>
+        </div>
+
+        <table class="info-table">
+            <tr><td>نام</td><td>{{ chart.name }}</td></tr>
+            <tr><td>تاریخ تولد (شمسی)</td><td>{{ chart.birth_date_persian }}</td></tr>
+            <tr><td>تاریخ تولد (میلادی)</td><td>{{ chart.birth_date_gregorian }}</td></tr>
+            <tr><td>ساعت تولد (محلی)</td><td>{{ chart.birth_time_local }}</td></tr>
+            <tr><td>ساعت (UTC)</td><td>{{ chart.birth_time_utc }}</td></tr>
+            <tr><td>شهر</td><td>{{ chart.city_name }}</td></tr>
+            <tr><td>مختصات</td>
+                <td class="geo-coords-cell">
+                    <div class="geo-coords-block">
+                        <span class="geo-dms">{{ chart.latitude|dms_lat }}</span>
+                        <span class="geo-dms">{{ chart.longitude|dms_lon }}</span>
+                    </div>
+                </td>
+            </tr>
+            <tr><td>منطقه زمانی</td><td>{{ chart.timezone }}</td></tr>
+            {% if chart.vision %}
+            <tr><td>دغدغه</td><td>{{ chart.vision }}</td></tr>
+            {% endif %}
+        </table>
+
+        {% if chart.astro_data %}
+        <div class="section">
+            <h3>📊 محاسبات نجومی</h3>
+            {{ chart.astro_data | safe }}
+        </div>
+        {% endif %}
+
+        {% if chart.ai_analysis %}
+        <div class="section">
+            <h3>🔮 تحلیل هوش مصنوعی</h3>
+            {{ chart.ai_analysis | safe }}
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.print()" class="btn-secondary">🖨️ چاپ</button>
+            <button onclick="window.location.href='/charts'" class="btn-secondary">📚 لیست زایچه‌ها</button>
+            <button onclick="window.location.href='/'" class="btn-primary">🏠 صفحه اصلی</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ترانزیت لحظه — {{ name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .compact-container { max-width: 900px; margin: 20px auto; padding: 15px; }
+        .compact-header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #95a5a6; padding-bottom: 10px; }
+        .compact-header h1 { font-size: 1.5em; margin: 0 0 5px 0; color: #2c3e50; }
+        .compact-header p { font-size: 0.9em; color: #7f8c8d; margin: 0; }
+        .info-table { width: 100%; border-collapse: collapse; font-size: 0.82em; margin-bottom: 15px; }
+        .info-table td { padding: 4px 8px; border: 1px solid #ddd; }
+        .info-table td:first-child { background: #f8f9fa; font-weight: bold; width: 28%; }
+        .astro-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.8em; }
+        .astro-table th { background: #34495e; color: white; padding: 6px 4px; text-align: center; font-size: 0.85em; }
+        .astro-table td { padding: 5px 4px; border: 1px solid #ddd; text-align: center; }
+        .astro-table tr:nth-child(even) { background: #f8f9fa; }
+        .section-title { font-size: 1em; font-weight: bold; margin: 15px 0 8px 0; color: #2c3e50; border-right: 4px solid #3498db; padding-right: 8px; }
+        .aspects-table td.aspect-cell { font-weight: 700; text-align: center !important; }
+        .astro-table td.aspect--conjunction { background: #5b4a8a !important; color: #fff; }
+        .astro-table td.aspect--opposition { background: #4a0e0e !important; color: #fff; }
+        .astro-table td.aspect--trine { background: #0b5345 !important; color: #fff; }
+        .astro-table td.aspect--square { background: #a93226 !important; color: #fff; }
+        .astro-table td.aspect--sextile { background: #b8e6b8 !important; color: #1a4d1a; }
+        .zodiac-sign-cell { font-weight: 700; text-align: center !important; }
+        .astro-table td.zodiac-fire { background: #ff9a4d !important; color: #4a1f00; }
+        .astro-table td.zodiac-water { background: #4a9fd8 !important; color: #062a45; }
+        .astro-table td.zodiac-air { background: #9ed4f5 !important; color: #123a5c; }
+        .astro-table td.zodiac-earth { background: #d4b896 !important; color: #3d2e1a; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        .btn-compact { padding: 8px 15px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary-compact { background: #27ae60; color: white; flex: 1; }
+        .btn-secondary-compact { background: #95a5a6; color: white; }
+        .page-top-toolbar { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+        .btn-print-top {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7;
+            border-radius: 6px; padding: 8px 14px; font-size: 0.85em; cursor: pointer;
+        }
+        .transit-time-banner {
+            background: #e8f4fc; border-right: 4px solid #3498db;
+            padding: 10px 12px; border-radius: 6px; margin-bottom: 14px;
+            font-size: 0.85em; color: #2c3e50; text-align: center;
+        }
+        @page { size: A4 landscape; margin: 8mm; }
+        @media print {
+            .page-top-toolbar, .btn-group { display: none !important; }
+            .compact-container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .astro-table { font-size: 0.7em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="compact-container">
+        <div class="page-top-toolbar">
+            <button type="button" onclick="window.print()" class="btn-print-top" title="چاپ">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                چاپ
+            </button>
+        </div>
+
+        <div class="compact-header">
+            <h1>ترانزیت لحظه — {{ name }}</h1>
+            <p>موقعیت فعلی آسمان در برابر زایچه تولد</p>
+        </div>
+
+        {% if current_date_info %}
+        <div class="transit-time-banner">
+            زمان محاسبه: <strong>{{ current_date_info.jalali_full }}</strong> شمسی
+            — {{ current_date_info.gregorian }} (وقت محلی)
+        </div>
+        {% endif %}
+
+        <table class="info-table">
+            <tr>
+                <td>نام</td>
+                <td>{{ name }}</td>
+                <td>تاریخ تولد</td>
+                <td>{{ date }}</td>
+            </tr>
+            <tr>
+                <td>ساعت تولد</td>
+                <td>{{ time }}</td>
+                <td>محل تولد</td>
+                <td>{{ place }}</td>
+            </tr>
+            {% if birth_data and birth_data.asc_sign_fa %}
+            <tr>
+                <td>طالع تولد</td>
+                <td colspan="3">
+                    <span style="font-size:1.2em">{{ birth_data.asc_sign_symbol }}</span>
+                    {{ birth_data.asc_sign_fa }}
+                </td>
+            </tr>
+            {% endif %}
+            {% if vision %}
+            <tr>
+                <td colspan="4" style="text-align:center; background:#f8f9fa; font-weight:bold;">دغدغه: {{ vision }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        {% if astro_data %}
+        {{ astro_data | safe }}
+        {% endif %}
+
+        {% if astro_data_for_ai %}
+        <textarea id="transitTextForPrompt" style="display:none">{{ astro_data_for_ai }}</textarea>
+        {% endif %}
+
+        <div class="btn-group">
+            <button type="button" onclick="viewTransitPrompt()" class="btn-compact btn-primary-compact" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                📋 پرامپت تحلیل ترانزیت (کپی دستی)
+            </button>
+            <button type="button" onclick="window.location.href='/'" class="btn-compact btn-secondary-compact">🏠 صفحه اصلی</button>
+        </div>
+    </div>
+
+    <script>
+        function viewTransitPrompt() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/view-transit-prompt';
+            form.target = '_blank';
+
+            const fields = {
+                'name': '{{ name }}',
+                'date': '{{ date }}',
+                'time': '{{ time }}',
+                'place': '{{ place }}',
+                'vision': '{{ vision }}'
+            };
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            const dataField = document.getElementById('transitTextForPrompt');
+            if (dataField) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'transit_data';
+                input.value = dataField.value;
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+    </script>
+</body>
+</html>

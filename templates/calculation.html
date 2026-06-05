@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آسمان در لحظه تولد - {{ name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .compact-container { max-width: 900px; margin: 20px auto; padding: 15px; }
+        .compact-header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #95a5a6; padding-bottom: 10px; }
+        .compact-header h1 { font-size: 1.5em; margin: 0 0 5px 0; color: #2c3e50; }
+        .compact-header p { font-size: 0.9em; color: #7f8c8d; margin: 0; }
+        .info-panels-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 15px; flex-wrap: nowrap; }
+        .info-panel-main { flex: 1 1 auto; min-width: 0; }
+        .info-panel-legend { flex: 0 0 auto; width: 300px; max-width: 33%; }
+        .info-table { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+        .info-table td { padding: 4px 8px; border: 1px solid #ddd; }
+        .info-table td:first-child { background: #f8f9fa; font-weight: bold; width: 28%; }
+        .color-legend-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.68em; }
+        .color-legend-table th { background: #34495e; color: #fff; padding: 4px 2px; text-align: center; font-size: 0.85em; }
+        .color-legend-table td { padding: 2px 2px; border: 1px solid #ddd; vertical-align: middle; }
+        .color-legend-table td.legend-swatch-col { width: 16px; text-align: center; padding: 2px 1px; }
+        .color-legend-table td.legend-label-col { font-size: 0.95em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .legend-swatch { display: inline-block; width: 14px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.12); vertical-align: middle; }
+        .legend-group td { background: #f0f3f6; font-weight: 700; font-size: 0.9em; color: #2c3e50; text-align: center; padding: 3px 1px; }
+        .color-legend-table td.legend-split-left { border-right: 2px solid #bdc3c7; }
+        .legend-group td + td + td { border-right: 2px solid #bdc3c7; }
+        .legend-group-sub { font-size: 0.82em; font-weight: 500; display: block; margin-top: 1px; line-height: 1.15; }
+        .astro-table td.dignity-cell { font-weight: 700; text-align: center !important; }
+        .aspects-table td.aspect-cell { font-weight: 700; text-align: center !important; }
+        .astro-table td.aspect--conjunction { background: #5b4a8a !important; color: #fff; }
+        .astro-table td.aspect--opposition { background: #4a0e0e !important; color: #fff; }
+        .astro-table td.aspect--trine { background: #0b5345 !important; color: #fff; }
+        .astro-table td.aspect--square { background: #a93226 !important; color: #fff; }
+        .astro-table td.aspect--sextile { background: #b8e6b8 !important; color: #1a4d1a; }
+        @media (max-width: 720px) {
+            .info-panels-row { flex-wrap: wrap; }
+            .info-panel-main, .info-panel-legend { flex: 1 1 100%; width: 100%; max-width: 100%; }
+        }
+        .astro-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.8em; }
+        .astro-table th { background: #34495e; color: white; padding: 6px 4px; text-align: center; font-size: 0.85em; }
+        .astro-table td { padding: 5px 4px; border: 1px solid #ddd; text-align: center; }
+        .astro-table tr:nth-child(even) { background: #f8f9fa; }
+        .section-title { font-size: 1em; font-weight: bold; margin: 15px 0 8px 0; color: #2c3e50; border-right: 4px solid #95a5a6; padding-right: 8px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        .btn-compact { padding: 8px 15px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .btn-primary-compact { background: #27ae60; color: white; flex: 1; }
+        .btn-primary-compact:hover { background: #229954; }
+        .btn-secondary-compact { background: #95a5a6; color: white; }
+        .btn-secondary-compact:hover { background: #7f8c8d; }
+        .warning-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px; margin: 10px 0; font-size: 0.85em; }
+        .geo-coords-cell { vertical-align: middle; }
+        .geo-coords-block { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+        .geo-dms { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .asc-sign-symbol { font-size: 1.25em; line-height: 1; margin-left: 4px; }
+        .info-sect-day { color: #b8860b; font-weight: bold; }
+        .info-sect-night { color: #4338ca; font-weight: bold; }
+        .zodiac-sign-cell { font-weight: 700; text-align: center !important; }
+        .astro-table td.zodiac-fire { background: #ff9a4d !important; color: #4a1f00; }
+        .astro-table td.zodiac-water { background: #4a9fd8 !important; color: #062a45; }
+        .astro-table td.zodiac-air { background: #9ed4f5 !important; color: #123a5c; }
+        .astro-table td.zodiac-earth { background: #d4b896 !important; color: #3d2e1a; }
+        .astro-table td.house-num-odd { background: #4a90d9 !important; color: #fff; font-weight: 700; }
+        .astro-table td.house-num-even { background: #f8a5c8 !important; color: #5a2040; font-weight: 700; }
+        .astro-table td.house-name-pink { background: #f8a5c8 !important; color: #5a2040; font-weight: 600; }
+        .astro-table td.house-name-blue { background: #4a90d9 !important; color: #fff; font-weight: 600; }
+        .astro-table td.sign-sect-day { background: #fff3c4 !important; color: #7a5a00; font-weight: 700; }
+        .astro-table td.sign-sect-night { background: #2c3e6e !important; color: #e8eaf6; font-weight: 700; }
+        .houses-table .houses-table-head th { border: 1px solid rgba(255,255,255,0.45); text-align: center; vertical-align: middle; }
+        .houses-table .houses-head-row1 th { background: #2c3e50; font-size: 1.05em; font-weight: 800; border-bottom: 2px solid rgba(255,255,255,0.85); }
+        .houses-table .houses-head-group--house { border-right: 2px solid rgba(255,255,255,0.9) !important; }
+        .houses-table .houses-head-group--sign { border-left: 2px solid rgba(255,255,255,0.9) !important; border-right: 2px solid rgba(255,255,255,0.9) !important; }
+        .houses-table .houses-head-col--group-end { border-right: 2px solid rgba(255,255,255,0.9) !important; }
+        .houses-table .houses-table-body td.houses-group-end { border-right: 2px solid #95a5a6 !important; }
+        .astro-methodology-note { margin: 18px 0 6px; padding: 10px 12px; background: #f4f6f8; border-right: 4px solid #95a5a6; border-radius: 6px; color: #555; font-size: 0.78em; line-height: 1.65; text-align: justify; }
+        .solar-intro-note { margin: 6px 0 12px; padding: 10px 12px; background: #fff8e6; border-right: 4px solid #f39c12; border-radius: 6px; color: #5d4e37; font-size: 0.82em; line-height: 1.65; text-align: justify; }
+        .interp-guide-link { display: inline-block; margin-top: 8px; font-size: 0.88em; color: #2980b9; cursor: pointer; text-decoration: none; border-bottom: 1px dashed #2980b9; }
+        .interp-guide-link:hover { color: #1a5276; border-bottom-color: #1a5276; }
+        .interp-modal { display: none; position: fixed; inset: 0; z-index: 10000; }
+        .interp-modal.is-open { display: block; }
+        .interp-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+        .interp-modal-panel { position: relative; margin: 3vh auto; width: min(94vw, 860px); max-height: 94vh; background: #fff; border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
+        .interp-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #2c3e50; color: #fff; flex-shrink: 0; }
+        .interp-modal-header h2 { margin: 0; font-size: 1.05em; }
+        .interp-modal-close { background: transparent; border: none; color: #fff; font-size: 1.5em; line-height: 1; cursor: pointer; padding: 0 4px; }
+        .interp-modal-body { padding: 14px 16px 18px; overflow-y: auto; font-size: 0.82em; line-height: 1.55; }
+        .interp-guide-intro { margin: 0 0 14px; color: #555; text-align: justify; }
+        .interp-guide-section { margin: 18px 0 8px; font-size: 1em; color: #2c3e50; border-right: 4px solid #3498db; padding-right: 8px; }
+        .interp-guide-sub { margin: 10px 0 6px; font-size: 0.92em; color: #34495e; }
+        .interp-guide-note { margin: 8px 0; color: #666; font-size: 0.9em; text-align: justify; }
+        .interp-guide-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 0.88em; }
+        .interp-guide-table th { background: #ecf0f1; color: #2c3e50; padding: 6px 5px; border: 1px solid #d5dbdb; text-align: center; font-weight: 700; }
+        .interp-guide-table td { padding: 5px 6px; border: 1px solid #e0e0e0; vertical-align: top; text-align: right; }
+        .interp-guide-table tr:nth-child(even) td { background: #fafbfc; }
+        .interp-houses td:first-child { text-align: center; font-weight: 700; width: 2.5em; }
+        .interp-planets td:first-child { white-space: nowrap; font-weight: 600; }
+        .interp-signs td:first-child { white-space: nowrap; font-weight: 600; }
+        .page-top-toolbar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 12px; }
+        .btn-print-top {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7;
+            border-radius: 6px; padding: 8px 14px; font-size: 0.85em;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-print-top:hover { background: #dfe6e9; }
+        .btn-print-top svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .chart-wheel-wrap { text-align: center; margin: 12px 0 20px; }
+        .chart-wheel-img {
+            max-width: min(100%, 520px); height: auto;
+            border: 1px solid #d5dbdb; border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(44, 62, 80, 0.12);
+            background: #f4f6f8;
+        }
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+        @media print {
+            body { background: #fff; padding: 0; margin: 0; }
+            .compact-container {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .info-panels-row { flex-wrap: wrap; }
+            .info-panel-legend { max-width: 100%; width: 100%; }
+            .astro-table {
+                width: 100% !important;
+                font-size: 0.7em;
+                table-layout: auto;
+            }
+            .astro-table th,
+            .astro-table td { padding: 3px 2px; }
+            .houses-table { font-size: 0.65em; }
+            .page-top-toolbar, .btn-group, .interp-guide-link { display: none !important; }
+            .chart-wheel-img { box-shadow: none; max-width: 42%; }
+            .section-title { page-break-after: avoid; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="compact-container">
+        {% if astro_data %}
+        <div class="page-top-toolbar">
+            <button type="button" onclick="window.print()" class="btn-print-top" title="چاپ">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                چاپ
+            </button>
+        </div>
+        {% endif %}
+        <div class="compact-header">
+            <h1>آسمان در لحظه تولد - {{ name }}</h1>
+            {% if interpretation_guide %}
+            <a href="#" class="interp-guide-link" id="openInterpGuide" role="button">📖 راهنمای تفسیر (خانه، کوکب، اتصال، قوت)</a>
+            {% endif %}
+        </div>
+
+        <div class="info-panels-row">
+            <div class="info-panel-main">
+                <table class="info-table">
+                    <tr>
+                        <td>نام</td>
+                        <td>{{ name }}</td>
+                        {% if birth_data %}
+                        <td>منطقه زمانی</td>
+                        <td>{{ birth_data.timezone }}</td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td>تاریخ (شمسی)</td>
+                        <td>{{ date }}</td>
+                        {% if birth_data %}
+                        <td>تاریخ (میلادی)</td>
+                        <td>{{ birth_data.gregorian_full }}</td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td>ساعت (محلی)</td>
+                        <td>{{ time }}</td>
+                        {% if birth_data %}
+                        <td>ساعت (UTC)</td>
+                        <td>{{ birth_data.utc_time }}</td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td>شهر تولد</td>
+                        <td>{{ place }}</td>
+                        {% if birth_data %}
+                        <td>مختصات</td>
+                        <td class="geo-coords-cell">
+                            <div class="geo-coords-block">
+                                <span class="geo-dms">{{ birth_data.lat|dms_lat }}</span>
+                                <span class="geo-dms">{{ birth_data.lon|dms_lon }}</span>
+                            </div>
+                        </td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                    </tr>
+                    {% if birth_data and birth_data.is_diurnal is defined %}
+                    <tr>
+                        <td>بخش زایچه</td>
+                        <td>
+                            {% if birth_data.is_diurnal %}
+                            <span class="info-sect-day">☀️ مولود روز</span>
+                            {% else %}
+                            <span class="info-sect-night">🌙 مولود شب</span>
+                            {% endif %}
+                        </td>
+                        <td>طالع</td>
+                        <td>
+                            {% if birth_data.asc_sign_fa %}
+                            <span class="asc-sign-symbol">{{ birth_data.asc_sign_symbol }}</span>
+                            {{ birth_data.asc_sign_fa }}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if solar_city %}
+                    <tr>
+                        <td>شهر حضور در سالگرد</td>
+                        <td colspan="3">{{ solar_city }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if vision %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; background:#f8f9fa; font-weight:bold;">دغدغه: {{ vision }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="info-panel-legend">
+                <table class="color-legend-table">
+                    <tr><th colspan="6">راهنمای رنگ‌ها</th></tr>
+                    <tr class="legend-group">
+                        <td colspan="2">جنسیت</td>
+                        <td colspan="2">روز / شب</td>
+                        <td colspan="2">کرامت<span class="legend-group-sub">قوی‌ترین ← ضعیف‌ترین</span></td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#4a90d9;"></span></td>
+                        <td class="legend-label-col">مذکر</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#fff3c4;"></span></td>
+                        <td class="legend-label-col">روزی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#0b5345;"></span></td>
+                        <td class="legend-label-col">درجه شرف</td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#f8a5c8;"></span></td>
+                        <td class="legend-label-col">مونث</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#2c3e6e;"></span></td>
+                        <td class="legend-label-col">شبی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#27ae60;"></span></td>
+                        <td class="legend-label-col">سروری</td>
+                    </tr>
+                    <tr class="legend-group">
+                        <td colspan="2">عنصر برج</td>
+                        <td colspan="2">حالت‌های ودایی</td>
+                        <td colspan="2">کرامت</td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#ff9a4d;"></span></td>
+                        <td class="legend-label-col">آتشی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#28a745;"></span></td>
+                        <td class="legend-label-col">پوشکار</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#b8e6b8;"></span></td>
+                        <td class="legend-label-col">برج شرف</td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#4a9fd8;"></span></td>
+                        <td class="legend-label-col">آبی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#ffc107;"></span></td>
+                        <td class="legend-label-col">وارگوتاما</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#f0b4b4;"></span></td>
+                        <td class="legend-label-col">برج هبوط</td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#9ed4f5;"></span></td>
+                        <td class="legend-label-col">بادی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#dc3545;"></span></td>
+                        <td class="legend-label-col">آشتامشا</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#a93226;"></span></td>
+                        <td class="legend-label-col">وبال</td>
+                    </tr>
+                    <tr>
+                        <td class="legend-swatch-col"><span class="legend-swatch" style="background:#d4b896;"></span></td>
+                        <td class="legend-label-col">خاکی</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#1a0505;"></span></td>
+                        <td class="legend-label-col">گاندانتا</td>
+                        <td class="legend-swatch-col legend-split-left"><span class="legend-swatch" style="background:#4a0e0e;"></span></td>
+                        <td class="legend-label-col">درجه هبوط</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        {% if astro_data %}
+        {{ astro_data | safe }}
+        {% else %}
+        <div class="warning-box">
+            <strong>⚠️ توجه:</strong> محاسبات دقیق انتخاب نشده است.
+        </div>
+        {% endif %}
+
+        {% if astro_data_for_ai %}
+        <textarea id="chartTextForPrompt" style="display:none">{{ astro_data_for_ai }}</textarea>
+        {% endif %}
+
+        <div class="btn-group">
+            <button type="button" onclick="viewPrompt()" class="btn-compact btn-primary-compact" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                📋 مشاهده پرامپت (کپی و تحلیل دستی)
+            </button>
+            <button type="button" onclick="window.location.href='/'" class="btn-compact btn-secondary-compact">🏠 صفحه اصلی</button>
+        </div>
+    </div>
+
+    {% if interpretation_guide %}
+    <div class="interp-modal" id="interpGuideModal" aria-hidden="true" role="dialog" aria-labelledby="interpGuideTitle">
+        <div class="interp-modal-backdrop" id="interpGuideBackdrop"></div>
+        <div class="interp-modal-panel">
+            <div class="interp-modal-header">
+                <h2 id="interpGuideTitle">راهنمای تفسیر زایچه</h2>
+                <button type="button" class="interp-modal-close" id="closeInterpGuide" aria-label="بستن">&times;</button>
+            </div>
+            <div class="interp-modal-body">
+                {{ interpretation_guide | safe }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        (function() {
+            var modal = document.getElementById('interpGuideModal');
+            var openBtn = document.getElementById('openInterpGuide');
+            if (!modal || !openBtn) return;
+            var closeBtn = document.getElementById('closeInterpGuide');
+            var backdrop = document.getElementById('interpGuideBackdrop');
+            function openModal(e) {
+                if (e) e.preventDefault();
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+            openBtn.addEventListener('click', openModal);
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (backdrop) backdrop.addEventListener('click', closeModal);
+            document.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+            });
+        })();
+
+        function viewPrompt() {
+            // Create a hidden form and submit it to open in new tab
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/view-prompt';
+            form.target = '_blank';
+            
+            // Add form fields
+            const fields = {
+                'name': '{{ name }}',
+                'date': '{{ date }}',
+                'time': '{{ time }}',
+                'place': '{{ place }}',
+                'vision': '{{ vision }}'
+            };
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            const astroDataField = document.getElementById('chartTextForPrompt');
+            if (astroDataField) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'astro_data';
+                input.value = astroDataField.value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+    </script>
+</body>
+</html>

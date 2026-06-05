@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطا - سامانه تحلیل نجومی</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container error-container">
+        <div class="error-icon">⚠️</div>
+        <h1>خطا</h1>
+        <div class="error-message">
+            <p>{{ error }}</p>
+        </div>
+        <div class="buttons">
+            <button onclick="window.history.back()">بازگشت</button>
+            <button onclick="window.location.href='/'">صفحه اصلی</button>
+        </div>
+    </div>
+</body>
+</html>

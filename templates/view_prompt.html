@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرامپت تحلیل نجومی - {{ name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .prompt-container {
+            background: white;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .prompt-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .prompt-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        .copy-btn:hover {
+            opacity: 0.9;
+        }
+        .prompt-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            white-space: pre-wrap;
+            font-family: 'Vazirmatn', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #2c3e50;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .info-section {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .info-section p {
+            margin: 5px 0;
+            color: #2c3e50;
+        }
+        .success-msg {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="prompt-container">
+        <div class="prompt-header">
+            <h1>📋 {{ prompt_title or 'پرامپت کامل تحلیل نجومی' }}</h1>
+            <p style="color: #666;">{{ prompt_subtitle or 'متن روان و ساده — بدون HTML' }}</p>
+        </div>
+
+        <div class="info-section">
+            <p><strong>نام:</strong> {{ name }}</p>
+            <p><strong>تاریخ تولد:</strong> {{ date }}</p>
+            <p><strong>ساعت تولد:</strong> {{ time }}</p>
+            <p><strong>محل تولد:</strong> {{ place }}</p>
+            {% if vision %}
+            <p><strong>هدف تحلیل:</strong> {{ vision }}</p>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="copy-btn" onclick="copyPrompt()">📋 کپی کردن پرامپت</button>
+            <button class="copy-btn" onclick="window.close()" style="background: #95a5a6;">✖️ بستن</button>
+        </div>
+
+        <div id="successMsg" class="success-msg">
+            ✓ پرامپت کپی شد! حالا می‌توانید در AI مورد نظر paste کنید.
+        </div>
+
+        <div class="prompt-content" id="promptContent">{{ prompt_text }}</div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="copy-btn" onclick="copyPrompt()">📋 کپی کردن پرامپت</button>
+        </div>
+    </div>
+
+    <script>
+        function copyPrompt() {
+            const promptContent = document.getElementById('promptContent');
+            const text = promptContent.innerText;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(text).then(function() {
+                // Show success message
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'block';
+                
+                // Hide after 3 seconds
+                setTimeout(function() {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            }).catch(function(err) {
+                // Fallback method
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'block';
+                setTimeout(function() {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+</html>

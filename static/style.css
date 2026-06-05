@@ -1,0 +1,958 @@
+/* Import Beautiful Persian Fonts - Local Version */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/static/fonts/Vazirmatn-Regular.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/static/fonts/Vazirmatn-Medium.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/static/fonts/Vazirmatn-Bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+    background: white;
+    direction: rtl;
+    padding: 20px;
+    min-height: 100vh;
+    line-height: 1.8;
+}
+
+/* Container Styles */
+.container {
+    background: white;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.5s ease-in;
+}
+
+.result-container {
+    background: white;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.5s ease-in;
+}
+
+.error-container {
+    text-align: center;
+    max-width: 600px;
+}
+
+/* Header Styles */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 48px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+    animation: pulse 2s infinite;
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 700;
+}
+
+h2 {
+    color: #34495e;
+    font-size: 20px;
+    margin: 20px 0 10px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 600;
+}
+
+h3 {
+    color: #555;
+    font-size: 18px;
+    margin: 20px 0 10px 0;
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+h4 {
+    color: #666;
+    font-size: 16px;
+    margin: 15px 0 10px 0;
+}
+
+.subtitle {
+    color: #555;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Info Box */
+.info-box {
+    background: #e8f4f8;
+    border-right: 4px solid #3498db;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+}
+
+.info-box strong {
+    color: #2980b9;
+}
+
+.info-box ul {
+    margin-right: 20px;
+    color: #34495e;
+}
+
+.info-box li {
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.birth-form .form-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.birth-form .form-row > label {
+    flex: 0 0 148px;
+    margin-bottom: 0;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.birth-form .form-row .field-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.birth-form .form-row--textarea {
+    align-items: flex-start;
+}
+
+.birth-form .form-row--textarea > label {
+    padding-top: 10px;
+}
+
+.birth-form .date-picker {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.birth-form .date-picker select {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+}
+
+.birth-form .date-picker .date-part-day {
+    flex: 0.85;
+}
+
+.birth-form .date-picker .date-part-month {
+    flex: 1.35;
+}
+
+.birth-form .date-picker .date-part-year {
+    flex: 1;
+}
+
+.birth-form .help-text {
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.birth-form textarea {
+    min-height: 64px;
+}
+
+.birth-form .info-box {
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+
+.birth-form .info-box ul {
+    margin: 6px 18px 0 0;
+}
+
+.birth-form .info-box li {
+    margin-bottom: 2px;
+    font-size: 12px;
+}
+
+@media (max-width: 560px) {
+    .birth-form .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .birth-form .form-row > label {
+        flex: none;
+        padding-top: 0;
+    }
+}
+
+label {
+    display: block;
+    color: #2c3e50;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+input[type="text"],
+textarea,
+select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+input[type="text"]:disabled,
+select:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Button Styles */
+button,
+.btn-primary,
+.btn-secondary {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Tahoma', sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    margin-top: 10px;
+}
+
+.form-actions-dual {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: stretch;
+}
+
+.btn-primary--compact {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    padding: 11px 18px;
+    font-size: 14px;
+    margin-top: 0;
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
+}
+
+.btn-transit {
+    flex: 1;
+    padding: 11px 18px;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.35);
+}
+
+.btn-transit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(52, 152, 219, 0.5);
+}
+
+@media (max-width: 520px) {
+    .form-actions-dual {
+        flex-direction: column;
+    }
+    .btn-primary--compact,
+    .btn-transit {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+}
+
+.btn-primary:hover,
+button[type="submit"]:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-primary:active,
+button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+button[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: #ecf0f1;
+    color: #2c3e50;
+    margin: 5px;
+}
+
+.btn-secondary:hover {
+    background: #bdc3c7;
+    transform: translateY(-2px);
+}
+
+/* Result Box */
+.result-box {
+    background: #fafafa;
+    padding: 30px;
+    border-radius: 12px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.result-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.result-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.result-box::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.result-box::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Astro Data Styles */
+.astro-data {
+    margin: 20px 0;
+}
+
+.zodiac-sign-cell {
+    font-weight: 700;
+    text-align: center !important;
+}
+
+.astro-table tr:nth-child(even) td.zodiac-fire,
+.astro-table td.zodiac-fire {
+    background: #ff9a4d !important;
+    color: #4a1f00;
+}
+
+.astro-table tr:nth-child(even) td.zodiac-water,
+.astro-table td.zodiac-water {
+    background: #4a9fd8 !important;
+    color: #062a45;
+}
+
+.astro-table tr:nth-child(even) td.zodiac-air,
+.astro-table td.zodiac-air {
+    background: #9ed4f5 !important;
+    color: #123a5c;
+}
+
+.astro-table tr:nth-child(even) td.zodiac-earth,
+.astro-table td.zodiac-earth {
+    background: #d4b896 !important;
+    color: #3d2e1a;
+}
+
+.sign-modality-cell {
+    font-weight: 600;
+}
+
+.houses-table .sign-character-cell {
+    font-size: 0.78em;
+    line-height: 1.35;
+    text-align: right;
+    min-width: 7.5em;
+}
+
+.astro-table tr:nth-child(even) td.house-num-odd,
+.astro-table td.house-num-odd {
+    background: #4a90d9 !important;
+    color: #fff;
+    font-weight: 700;
+}
+
+.astro-table tr:nth-child(even) td.house-num-even,
+.astro-table td.house-num-even {
+    background: #f8a5c8 !important;
+    color: #5a2040;
+    font-weight: 700;
+}
+
+.astro-table tr:nth-child(even) td.house-name-pink,
+.astro-table td.house-name-pink {
+    background: #f8a5c8 !important;
+    color: #5a2040;
+    font-weight: 600;
+}
+
+.astro-table tr:nth-child(even) td.house-name-blue,
+.astro-table td.house-name-blue {
+    background: #4a90d9 !important;
+    color: #fff;
+    font-weight: 600;
+}
+
+.astro-table tr:nth-child(even) td.sign-sect-day,
+.astro-table td.sign-sect-day {
+    background: #fff3c4 !important;
+    color: #7a5a00;
+    font-weight: 700;
+}
+
+.astro-table tr:nth-child(even) td.sign-sect-night,
+.astro-table td.sign-sect-night {
+    background: #2c3e6e !important;
+    color: #e8eaf6;
+    font-weight: 700;
+}
+
+.astro-table tr:nth-child(even) td.dignity--fall_degree,
+.astro-table td.dignity--fall_degree {
+    background: #4a0e0e !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.dignity--detriment,
+.astro-table td.dignity--detriment {
+    background: #a93226 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.dignity--fall_sign,
+.astro-table td.dignity--fall_sign {
+    background: #f0b4b4 !important;
+    color: #5c2020;
+}
+
+.astro-table tr:nth-child(even) td.dignity--exaltation_sign,
+.astro-table td.dignity--exaltation_sign {
+    background: #b8e6b8 !important;
+    color: #1a4d1a;
+}
+
+.astro-table tr:nth-child(even) td.dignity--rulership,
+.astro-table td.dignity--rulership {
+    background: #27ae60 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.dignity--exaltation_degree,
+.astro-table td.dignity--exaltation_degree {
+    background: #0b5345 !important;
+    color: #fff;
+}
+
+.aspects-table td.aspect-cell {
+    font-weight: 700;
+    text-align: center !important;
+}
+
+.astro-table tr:nth-child(even) td.aspect--conjunction,
+.astro-table td.aspect--conjunction {
+    background: #5b4a8a !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.aspect--opposition,
+.astro-table td.aspect--opposition {
+    background: #4a0e0e !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.aspect--trine,
+.astro-table td.aspect--trine {
+    background: #0b5345 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.aspect--square,
+.astro-table td.aspect--square {
+    background: #a93226 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.aspect--sextile,
+.astro-table td.aspect--sextile {
+    background: #b8e6b8 !important;
+    color: #1a4d1a;
+}
+
+.info-sect-day {
+    color: #b8860b;
+    font-weight: 700;
+}
+
+.info-sect-night {
+    color: #4338ca;
+    font-weight: 700;
+}
+
+.astro-methodology-note {
+    margin: 24px 0 8px;
+    padding: 12px 16px;
+    background: #f4f6f8;
+    border-right: 4px solid #95a5a6;
+    border-radius: 6px;
+    color: #555;
+    font-size: 0.88em;
+    line-height: 1.7;
+    text-align: justify;
+}
+
+.astro-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+.astro-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    text-align: right;
+    font-weight: bold;
+}
+
+.houses-table .houses-table-head th {
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    text-align: center;
+    vertical-align: middle;
+}
+
+.houses-table .houses-head-row1 th {
+    background: linear-gradient(135deg, #2c3e50 0%, #3d566e 100%);
+    font-size: 1.05em;
+    font-weight: 800;
+    padding: 10px 6px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.02em;
+}
+
+.houses-table .houses-head-group--house {
+    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
+}
+
+.houses-table .houses-head-group--sign {
+    border-left: 2px solid rgba(255, 255, 255, 0.9) !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
+}
+
+.houses-table .houses-head-row2 th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-size: 0.82em;
+    font-weight: 600;
+    padding: 8px 4px;
+}
+
+.houses-table .houses-head-col--group-end {
+    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
+}
+
+.houses-table .houses-table-body td.houses-group-end {
+    border-right: 2px solid #95a5a6 !important;
+}
+
+.astro-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+.astro-table tr:last-child td {
+    border-bottom: none;
+}
+
+.astro-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+/* Info Table - Personal Information (all white background) */
+.info-table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+.info-table td {
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    text-align: right;
+    background: white !important;  /* Force white background for all cells */
+}
+
+.info-table tr:first-child td:first-child,
+.info-table tr td:nth-child(odd) {
+    font-weight: 600;
+    color: #2c3e50;
+    background: white !important;
+}
+
+.info-section {
+    background: #e8f4f8;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.info-section p {
+    margin: 5px 0;
+    color: #2c3e50;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Error Styles */
+.error-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.error-message {
+    background: #fee;
+    border: 2px solid #fcc;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    color: #c33;
+}
+
+.error-message p {
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Print Styles */
+@page {
+    size: A4 landscape;
+    margin: 8mm;
+}
+
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .container,
+    .result-container {
+        box-shadow: none;
+        margin: 0;
+        padding: 20px;
+    }
+    
+    button,
+    .btn-primary,
+    .btn-secondary,
+    .action-buttons {
+        display: none !important;
+    }
+    
+    .result-box {
+        max-height: none;
+        overflow: visible;
+        border: none;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container,
+    .result-container {
+        padding: 20px;
+        margin: 20px auto;
+        border-radius: 15px;
+    }
+    
+    h1 {
+        font-size: 22px;
+    }
+    
+    .logo {
+        font-size: 36px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-secondary {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .result-box {
+        padding: 20px;
+        max-height: 60vh;
+    }
+    
+    .astro-table {
+        font-size: 13px;
+    }
+    
+    .astro-table th,
+    .astro-table td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container,
+    .result-container {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    input[type="text"],
+    textarea,
+    select,
+    button {
+        font-size: 13px;
+    }
+    
+    .astro-table {
+        font-size: 12px;
+    }
+}
+
+/* Geographic coordinates (DMS) */
+.geo-dms,
+.arc-dms {
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-size: 0.95em;
+    color: #2c3e50;
+}
+
+.geo-coords-cell {
+    vertical-align: middle;
+}
+
+.geo-coords-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+/* Vedic special states column */
+.astro-table td.vedic-td {
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.astro-table tr:nth-child(even) td.vedic-td--pushkara,
+.astro-table td.vedic-td--pushkara {
+    background: #28a745 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.vedic-td--vargottama,
+.astro-table td.vedic-td--vargottama {
+    background: #ffc107 !important;
+    color: #1a1a1a;
+}
+
+.astro-table tr:nth-child(even) td.vedic-td--ashtamamsa,
+.astro-table td.vedic-td--ashtamamsa {
+    background: #dc3545 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.vedic-td--gandanta,
+.astro-table td.vedic-td--gandanta {
+    background: #1a0505 !important;
+    color: #fff;
+}
+
+.astro-table tr:nth-child(even) td.vedic-td--multi,
+.astro-table td.vedic-td--multi {
+    background: #fff !important;
+    color: #333;
+    font-weight: 600;
+}
+
+.vedic-label--pushkara {
+    color: #28a745;
+}
+
+.vedic-label--vargottama {
+    color: #c99700;
+}
+
+.vedic-label--ashtamamsa {
+    color: #dc3545;
+}
+
+.vedic-label--gandanta {
+    color: #1a0505;
+}
+
+.vedic-sep {
+    color: #999;
+    font-weight: 400;
+}
+
+.coord-preview {
+    margin: 0 0 12px 0;
+    padding: 10px 12px;
+    background: #f0f4f8;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #34495e;
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: left;
+}
+
+.coord-preview:empty {
+    display: none;
+}
