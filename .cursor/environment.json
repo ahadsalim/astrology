@@ -1,0 +1,17 @@
+{
+  "name": "Nojoom Atlas",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "flask-app",
+      "command": "source .venv/bin/activate && python app.py",
+      "description": "Runs the Nojoom Atlas Flask web app on http://0.0.0.0:5000"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 5000
+    }
+  ]
+}
