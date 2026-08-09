@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1030">
+    <title>{% block title %}نجوم اطلس{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <div class="stars" aria-hidden="true"></div>
+
+    {% if not hide_nav %}
+    <nav class="navbar">
+        <div class="navbar__inner">
+            <a class="brand" href="/">
+                <span class="brand__mark">🌌</span>
+                <span class="brand__name"><b>نجوم</b> <span>اطلس</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="{% if nav == 'home' %}active{% endif %}">🏠 خانه</a>
+                <a href="/charts" class="{% if nav == 'charts' %}active{% endif %}">📚 زایچه‌ها</a>
+                <a href="/cities-admin" class="{% if nav == 'cities' %}active{% endif %}">🏙️ شهرها</a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="page">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        ساخته‌شده با ✨ نجوم اطلس — محاسبات دقیق بر پایهٔ Swiss Ephemeris
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

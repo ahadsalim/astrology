@@ -1,68 +1,46 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>زایچه‌های ذخیره شده - نجوم</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .charts-container { max-width: 1000px; margin: 20px auto; padding: 15px; }
-        .charts-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4a90e2; padding-bottom: 10px; }
-        .charts-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; }
-        .charts-table th { background: #4a90e2; color: white; padding: 10px; text-align: right; }
-        .charts-table td { padding: 10px; border: 1px solid #ddd; }
-        .charts-table tr:hover { background: #f8f9fa; }
-        .view-btn { background: #4a90e2; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
-        .view-btn:hover { background: #357abd; }
-        .empty-state { text-align: center; padding: 40px; color: #7f8c8d; }
-    </style>
-</head>
-<body>
-    <div class="charts-container">
-        <div class="charts-header">
-            <h1>📚 زایچه‌های ذخیره شده</h1>
-            <p>لیست تمام زایچه‌های محاسبه و ذخیره شده</p>
-        </div>
+{% extends "base.html" %}
+{% set nav = 'charts' %}
+{% block title %}زایچه‌های ذخیره شده — نجوم اطلس{% endblock %}
 
+{% block content %}
+<div class="shell">
+    <div class="hero">
+        <div class="hero__logo">📚</div>
+        <h1>زایچه‌های ذخیره شده</h1>
+        <p class="subtitle">فهرست تمام زایچه‌های محاسبه و ذخیره‌شده</p>
+    </div>
+
+    <div class="card mt-2">
         {% if charts and charts|length > 0 %}
-        <table class="charts-table">
-            <thead>
-                <tr>
-                    <th>شناسه</th>
-                    <th>نام</th>
-                    <th>تاریخ تولد</th>
-                    <th>شهر</th>
-                    <th>تاریخ ذخیره</th>
-                    <th>عملیات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for chart in charts %}
-                <tr>
-                    <td>{{ chart.id }}</td>
-                    <td>{{ chart.name }}</td>
-                    <td>{{ chart.birth_date_persian }}</td>
-                    <td>{{ chart.city_name }}</td>
-                    <td>{{ chart.created_at[:16] }}</td>
-                    <td>
-                        <a href="/chart/{{ chart.id }}" class="view-btn">👁️ مشاهده</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div style="overflow-x:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>شناسه</th><th>نام</th><th>تاریخ تولد</th><th>شهر</th><th>تاریخ ذخیره</th><th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chart in charts %}
+                    <tr>
+                        <td>{{ chart.id }}</td>
+                        <td>{{ chart.name }}</td>
+                        <td>{{ chart.birth_date_persian }}</td>
+                        <td>{{ chart.city_name }}</td>
+                        <td>{{ chart.created_at[:16] }}</td>
+                        <td><a href="/chart/{{ chart.id }}" class="btn btn-primary btn-sm" style="width:auto">👁️ مشاهده</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <div class="empty-state">
-            <h2>📭 هیچ زایچه‌ای ذخیره نشده است</h2>
-            <p>برای شروع، یک زایچه جدید محاسبه کنید</p>
+            <span class="emoji">📭</span>
+            <h2 style="color:#fff">هنوز زایچه‌ای ذخیره نشده است</h2>
+            <p>برای شروع، یک زایچه جدید محاسبه و ذخیره کنید.</p>
+            <a href="/" class="btn btn-primary mt-2" style="width:auto">🔮 محاسبه زایچه جدید</a>
         </div>
         {% endif %}
-
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="window.location.href='/'" class="btn-primary">
-                🏠 بازگشت به صفحه اصلی
-            </button>
-        </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

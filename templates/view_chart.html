@@ -1,28 +1,22 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>زایچه {{ chart.name }} - نجوم</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .chart-container { max-width: 1000px; margin: 20px auto; padding: 15px; }
-        .chart-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4a90e2; padding-bottom: 10px; }
-        .info-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; }
-        .info-table td { padding: 8px; border: 1px solid #ddd; }
-        .info-table td:first-child { background: #f8f9fa; font-weight: bold; width: 30%; }
-        .section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-        .section h3 { margin-top: 0; color: #2c3e50; }
-    </style>
-</head>
-<body>
-    <div class="chart-container">
-        <div class="chart-header">
-            <h1>🌟 زایچه {{ chart.name }}</h1>
-            <p>شناسه: {{ chart.id }} | ذخیره شده در: {{ chart.created_at }}</p>
-        </div>
+{% extends "base.html" %}
+{% set nav = 'charts' %}
+{% block title %}زایچه {{ chart.name }} — نجوم اطلس{% endblock %}
 
-        <table class="info-table">
+{% block content %}
+<div class="shell">
+    <div class="page-top-toolbar">
+        <div class="section-head">
+            <span class="brand__mark">🌟</span>
+            <div>
+                <h1 style="font-size:1.35rem;">زایچه {{ chart.name }}</h1>
+                <p class="subtitle">شناسه: {{ chart.id }} — ذخیره‌شده در {{ chart.created_at }}</p>
+            </div>
+        </div>
+        <button type="button" onclick="window.print()" class="btn-print-top">🖨️ چاپ</button>
+    </div>
+
+    <div class="card">
+        <table class="info-table" style="margin:0;">
             <tr><td>نام</td><td>{{ chart.name }}</td></tr>
             <tr><td>تاریخ تولد (شمسی)</td><td>{{ chart.birth_date_persian }}</td></tr>
             <tr><td>تاریخ تولد (میلادی)</td><td>{{ chart.birth_date_gregorian }}</td></tr>
@@ -38,30 +32,27 @@
                 </td>
             </tr>
             <tr><td>منطقه زمانی</td><td>{{ chart.timezone }}</td></tr>
-            {% if chart.vision %}
-            <tr><td>دغدغه</td><td>{{ chart.vision }}</td></tr>
-            {% endif %}
+            {% if chart.vision %}<tr><td>دغدغه</td><td>{{ chart.vision }}</td></tr>{% endif %}
         </table>
-
-        {% if chart.astro_data %}
-        <div class="section">
-            <h3>📊 محاسبات نجومی</h3>
-            {{ chart.astro_data | safe }}
-        </div>
-        {% endif %}
-
-        {% if chart.ai_analysis %}
-        <div class="section">
-            <h3>🔮 تحلیل هوش مصنوعی</h3>
-            {{ chart.ai_analysis | safe }}
-        </div>
-        {% endif %}
-
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="window.print()" class="btn-secondary">🖨️ چاپ</button>
-            <button onclick="window.location.href='/charts'" class="btn-secondary">📚 لیست زایچه‌ها</button>
-            <button onclick="window.location.href='/'" class="btn-primary">🏠 صفحه اصلی</button>
-        </div>
     </div>
-</body>
-</html>
+
+    {% if chart.astro_data %}
+    <div class="sheet mt-2">
+        <div class="section-title">📊 محاسبات نجومی</div>
+        {{ chart.astro_data | safe }}
+    </div>
+    {% endif %}
+
+    {% if chart.ai_analysis %}
+    <div class="ai-panel mt-2">
+        <div class="ai-panel__head">🔮 تحلیل هوش مصنوعی</div>
+        <div class="ai-panel__body"><div class="ai-analysis">{{ chart.ai_analysis | safe }}</div></div>
+    </div>
+    {% endif %}
+
+    <div class="action-buttons">
+        <a href="/charts" class="btn btn-secondary" style="width:auto">📚 لیست زایچه‌ها</a>
+        <a href="/" class="btn btn-primary" style="width:auto">🏠 صفحه اصلی</a>
+    </div>
+</div>
+{% endblock %}
