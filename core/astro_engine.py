@@ -374,22 +374,22 @@ class AstroEngine:
         Returns:
             House number (1-12)
         """
-        # Normalize longitude to 0-360
+        # Normalize longitude to 0-360. Do not mutate this value inside the loop;
+        # a wrap-around house (e.g. 335° → 4°) would otherwise push later planets
+        # into house 1.
         planet_long = planet_longitude % 360
-        
+
         for i in range(12):
-            cusp1 = house_cusps[i]['longitude']
-            cusp2 = house_cusps[(i + 1) % 12]['longitude']
-            
-            # Handle wrap-around at 360/0 degrees
-            if cusp2 < cusp1:
-                cusp2 += 360
-                if planet_long < cusp1:
-                    planet_long += 360
-            
-            if cusp1 <= planet_long < cusp2:
-                return i + 1
-        
+            cusp1 = house_cusps[i]['longitude'] % 360
+            cusp2 = house_cusps[(i + 1) % 12]['longitude'] % 360
+            house_num = house_cusps[i].get('house', i + 1)
+
+            if cusp1 <= cusp2:
+                if cusp1 <= planet_long < cusp2:
+                    return house_num
+            elif planet_long >= cusp1 or planet_long < cusp2:
+                return house_num
+
         return 1  # Default to first house if calculation fails
     
     def calculate_aspects(self, planets_data: Dict, nodes_data: Dict = None) -> List[Dict]:
