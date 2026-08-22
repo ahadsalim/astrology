@@ -104,7 +104,7 @@ cp .env.example .env
 API_KEY=your_api_key_here
 API_URL=https://api.gapgpt.app/v1
 ASTRO_MODEL=gpt-5.2
-SIMPLIFY_MODEL=gpt-4o-mini
+SIMPLIFY_MODEL=gpt-5.6-luna
 FLASK_DEBUG=False
 SECRET_KEY=your_secret_key_here
 HOST=0.0.0.0

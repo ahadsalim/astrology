@@ -92,7 +92,7 @@ pip install -r requirements.txt
 OPENAI_API_KEY=your_api_key_here
 OPENAI_API_BASE=https://api.gapgpt.app/v1
 ASTRO_MODEL=gpt-5.2
-SIMPLIFY_MODEL=gpt-4o-mini
+SIMPLIFY_MODEL=gpt-5.6-luna
 ```
 
 ### 3. اجرای برنامه

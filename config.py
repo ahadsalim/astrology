@@ -12,7 +12,7 @@ class Config:
     
     # Model Configuration
     ASTRO_MODEL = os.getenv('ASTRO_MODEL', 'gpt-4o-mini')
-    SIMPLIFY_MODEL = os.getenv('SIMPLIFY_MODEL', 'gpt-4o-mini')
+    SIMPLIFY_MODEL = os.getenv('SIMPLIFY_MODEL', 'gpt-5.6-luna')
     
     # Flask Configuration
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
