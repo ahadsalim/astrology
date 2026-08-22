@@ -1,6 +1,7 @@
 import logging
 from openai import OpenAI
 from config import Config
+from prompts import SIMPLIFY_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +64,5 @@ class AIService:
         Returns:
             Simplified version
         """
-        prompt = f"""
-متن زیر یک تحلیل نجومی است.
-تمام اصطلاحات تخصصی نجومی را حذف کن و آن را به یک متن ساده و روان تبدیل کن
-که هر فرد عادی بتواند بفهمد.
-از دادن پیشنهاد در انتها خودداری کن. متن باید مانند یک گزارش برای مخاطب باشد.
-در ابتدا یک خط توضیح بده که این گزارش چیست و سپس متن ساده شده را بنویس.
-خروجی بصورت کد HTML باشد.
-
-{text}
-"""
-        
+        prompt = SIMPLIFY_PROMPT.format(text=str(text or "").replace("{", "(").replace("}", ")"))
         return self.generate_analysis(prompt, model=Config.SIMPLIFY_MODEL)

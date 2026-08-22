@@ -34,6 +34,23 @@ except ValueError as e:
 ai_service = AIService()
 
 
+def _safe_prompt_value(value):
+    """Keep user text from breaking str.format placeholders."""
+    return str(value or "").replace("{", "(").replace("}", ")")
+
+
+def _prompt_when(date="", time="", place=""):
+    """Compose a short when/where line for analysis prompts."""
+    parts = []
+    if date:
+        parts.append(date)
+    if time:
+        parts.append(f"ساعت {time}")
+    if place:
+        parts.append(place)
+    return "، ".join(parts) if parts else "نامشخص"
+
+
 @app.template_filter('dms_lat')
 def dms_lat_filter(value):
     """Jinja filter: decimal latitude -> DMS string."""
@@ -234,8 +251,10 @@ def view_prompt():
         astro_data = request.form.get("astro_data", "")
         
         prompt = ASTRO_PROMPT.format(
-            astro_data=astro_data,
-            vision=vision if vision else "تحلیل جامع زایچه",
+            name=_safe_prompt_value(name or "مخاطب"),
+            when=_safe_prompt_value(_prompt_when(date, time, place)),
+            astro_data=_safe_prompt_value(astro_data),
+            vision=_safe_prompt_value(vision) if vision else "تحلیل جامع زایچه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         # Render template with prompt text
@@ -248,7 +267,7 @@ def view_prompt():
             vision=vision,
             prompt_text=prompt,
             prompt_title='پرامپت تحلیل زایچه تولد و سولار',
-            prompt_subtitle='خروجی: دو بخش (تولد + سولار) — متن روان، بدون HTML',
+            prompt_subtitle='خروجی: تفسیر خانه به خانه (۱ تا ۱۲) + سولار — متن روان، بدون HTML',
         )
 
     except Exception as e:
@@ -268,8 +287,10 @@ def view_transit_prompt():
         transit_data = request.form.get("transit_data", "")
 
         prompt = TRANSIT_PROMPT.format(
-            transit_data=transit_data,
-            vision=vision if vision else "تحلیل ترانزیت لحظه",
+            name=_safe_prompt_value(name or "مخاطب"),
+            when=_safe_prompt_value(_prompt_when(date, time, place)),
+            transit_data=_safe_prompt_value(transit_data),
+            vision=_safe_prompt_value(vision) if vision else "تحلیل ترانزیت لحظه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         return render_template(
@@ -281,7 +302,7 @@ def view_transit_prompt():
             vision=vision,
             prompt_text=prompt,
             prompt_title='پرامپت تحلیل ترانزیت لحظه',
-            prompt_subtitle='خروجی: تحلیل وضعیت فعلی — متن روان، بدون HTML',
+            prompt_subtitle='خروجی: ترانزیت خانه به خانه (۱ تا ۱۲) — متن روان، بدون HTML',
         )
     except Exception as e:
         logger.error(f"View transit prompt failed: {e}")
