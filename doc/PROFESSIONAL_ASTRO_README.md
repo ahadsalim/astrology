@@ -89,10 +89,18 @@ pip install -r requirements.txt
 فایل `.env` ایجاد کنید:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
-OPENAI_API_BASE=https://api.gapgpt.app/v1
+API_KEY=your_api_key_here
+API_URL=https://apihub.agnes-ai.com/v1
+ASTRO_MODEL=agnes-2.0-flash
+SIMPLIFY_MODEL=agnes-2.0-flash
+```
+
+GapGPT + Luna:
+
+```env
+API_URL=https://api.gapgpt.app/v1
 ASTRO_MODEL=gpt-5.2
-SIMPLIFY_MODEL=gpt-4o-mini
+SIMPLIFY_MODEL=gpt-5.6-luna
 ```
 
 ### 3. اجرای برنامه

@@ -5,6 +5,61 @@ Converts chart data to clean structured text for manual AI analysis
 """
 
 from utils.geo_format import format_coordinates, format_arc_dms
+from core.house_meanings import get_house_meaning_fa
+from core.sign_qualities import get_sign_ruler_fa
+
+
+PLANET_ORDER = [
+    'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+    'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto',
+]
+
+
+def _house_for_longitude(longitude, houses_data):
+    """Return natal house number for an ecliptic longitude."""
+    cusps = (houses_data or {}).get('cusps') or []
+    if not cusps or longitude is None:
+        return None
+    for i, cusp in enumerate(cusps):
+        current_cusp = cusp['longitude']
+        next_cusp = cusps[(i + 1) % 12]['longitude']
+        if next_cusp < current_cusp:
+            if longitude >= current_cusp or longitude < next_cusp:
+                return cusp['house']
+        elif current_cusp <= longitude < next_cusp:
+            return cusp['house']
+    return cusps[0].get('house', 1)
+
+
+def _occupants_by_house(chart_data):
+    occupants = {i: [] for i in range(1, 13)}
+    for data in (chart_data.get('planets') or {}).values():
+        if data and data.get('house'):
+            occupants[int(data['house'])].append(data['name_fa'])
+    for node in (chart_data.get('nodes') or {}).values():
+        if node and node.get('house'):
+            occupants[int(node['house'])].append(node['name_fa'])
+    return occupants
+
+
+def _format_house_cusps(chart_data):
+    """Plain-text natal houses with cusp, ruler, and occupants."""
+    lines = []
+    lines.append("🏠 خانه‌ها (پلاسیدیوس) — برای تفسیر خانه به خانه:")
+    lines.append("-" * 80)
+    occupants = _occupants_by_house(chart_data)
+    for house in chart_data.get('houses', {}).get('cusps', []):
+        num = house['house']
+        names = occupants.get(num) or []
+        occupant_text = "، ".join(names) if names else "خالی"
+        lines.append(f"  خانه {num} ({get_house_meaning_fa(num)}):")
+        lines.append(
+            f"    - رأس: {format_arc_dms(house['degree_in_sign'])} {house['sign_fa']}"
+            f" — حاکم برج: {get_sign_ruler_fa(house['sign_fa'])}"
+        )
+        lines.append(f"    - ساکنان: {occupant_text}")
+    lines.append("")
+    return lines
 
 
 def _format_transit_body_lines(data: dict) -> list[str]:
@@ -58,10 +113,11 @@ def format_chart_for_ai(chart_data, birth_data, solar_return_data=None):
     )
     lines.append("")
 
+    lines.extend(_format_house_cusps(chart_data))
+
     lines.append("🪐 کواکب:")
     lines.append("-" * 80)
-    planet_order = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
-    for name in planet_order:
+    for name in PLANET_ORDER:
         if name in chart_data['planets']:
             data = chart_data['planets'][name]
             if data:
@@ -83,6 +139,22 @@ def format_chart_for_ai(chart_data, birth_data, solar_return_data=None):
                     lines.append(f"    - وضعیت شمس: {data['sun_relation_fa']}")
                 lines.append(f"    - وضعیت: {'راجعه' if data['retrograde'] else 'مستقیم'}")
                 lines.append("")
+
+    nodes = chart_data.get('nodes') or {}
+    if nodes:
+        lines.append("☊☋ عقده‌های قمری:")
+        lines.append("-" * 80)
+        for key in ('north_node', 'south_node'):
+            node = nodes.get(key)
+            if not node:
+                continue
+            lines.append(f"  {node['name_fa']}:")
+            lines.append(
+                f"    - درجه در برج اعتدالی: {format_arc_dms(node['degree_in_sign'])} — برج: {node['sign_fa']}"
+            )
+            if node.get('house'):
+                lines.append(f"    - خانه: {node['house']}")
+            lines.append("")
 
     if chart_data.get('aspects'):
         lines.append("⚹ اتصالات مهم:")
@@ -115,12 +187,15 @@ def format_chart_for_ai(chart_data, birth_data, solar_return_data=None):
         lines.append(f"    طالع سولار: {format_arc_dms(asc['degree_in_sign'])} {asc['sign_fa']}")
         lines.append(f"    قله آسمان سولار: {format_arc_dms(mc['degree_in_sign'])} {mc['sign_fa']}")
         lines.append("")
-        lines.append("  کواکب سولار:")
-        for name in planet_order:
+        lines.append("  کواکب سولار (با خانهٔ فعال‌شده در زایچه تولد):")
+        natal_houses = chart_data.get('houses')
+        for name in PLANET_ORDER:
             if name in solar_return_data.get('planets', {}):
                 data = solar_return_data['planets'][name]
+                natal_house = _house_for_longitude(data.get('longitude'), natal_houses)
+                house_note = f" — خانه {natal_house} زایچه تولد" if natal_house else ""
                 lines.append(
-                    f"    {data['name_fa']}: {format_arc_dms(data['degree_in_sign'])} {data['sign_fa']}"
+                    f"    {data['name_fa']}: {format_arc_dms(data['degree_in_sign'])} {data['sign_fa']}{house_note}"
                 )
         lines.append("")
 
@@ -145,6 +220,25 @@ def format_transit_for_ai(chart_data, birth_data, transits_data, transit_aspects
     lines.append(f"  • محل تولد: {birth_data.get('city_name', 'نامشخص')}")
     asc = chart_data['houses']['ascendant']
     lines.append(f"  • طالع تولد: {asc['sign_fa']}")
+    lines.append("")
+
+    lines.append("🏠 خانه‌های زایچه تولد که الان ترانزیت دارند:")
+    lines.append("-" * 80)
+    by_house = {i: [] for i in range(1, 13)}
+    for group_key in ('slow', 'fast', 'nodes'):
+        group = transits_data.get(group_key) or {}
+        for data in group.values():
+            if not data:
+                continue
+            house_num = data.get('natal_house')
+            if not house_num:
+                continue
+            retro = " [راجعه]" if data.get('retrograde') else ""
+            by_house[int(house_num)].append(f"{data['name_fa']}{retro}")
+    for num in range(1, 13):
+        names = by_house[num]
+        occupant_text = "، ".join(names) if names else "ساکت"
+        lines.append(f"  خانه {num} ({get_house_meaning_fa(num)}): {occupant_text}")
     lines.append("")
 
     lines.append("🕐 زمان محاسبه ترانزیت:")

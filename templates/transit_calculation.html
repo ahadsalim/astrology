@@ -89,6 +89,9 @@
         fd.append('transit_data', getTransitText());
         fd.append('vision', CTX.vision || '');
         fd.append('name', CTX.name || '');
+        fd.append('date', CTX.date || '');
+        fd.append('time', CTX.time || '');
+        fd.append('place', CTX.place || '');
 
         fetch('/analyze-transit', { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })

@@ -15,7 +15,7 @@ class Config:
     API_KEY = os.getenv('API_KEY', '')
     API_URL = os.getenv('API_URL', 'https://apihub.agnes-ai.com/v1')
 
-    # Model Configuration
+    # Model Configuration (override in .env; GapGPT users often set SIMPLIFY_MODEL=gpt-5.6-luna)
     ASTRO_MODEL = os.getenv('ASTRO_MODEL', 'agnes-2.0-flash')
     SIMPLIFY_MODEL = os.getenv('SIMPLIFY_MODEL', 'agnes-2.0-flash')
 

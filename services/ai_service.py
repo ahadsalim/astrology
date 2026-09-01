@@ -5,6 +5,13 @@ import re
 from openai import OpenAI
 
 from config import Config
+from prompts import (
+    ASTRO_PROMPT,
+    SIMPLIFY_PROMPT,
+    TRANSIT_PROMPT,
+    prompt_when,
+    safe_prompt_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,43 +69,41 @@ class AIService:
             logger.error(f"AI API error: {e}")
             raise RuntimeError(f"خطا در ارتباط با هوش مصنوعی: {str(e)}")
 
-    def analyze_birth_chart(self, astro_data, vision=""):
-        """Build the birth-chart prompt and generate the full analysis."""
-        from prompts import ASTRO_PROMPT
+    def analyze_birth_chart(self, astro_data, vision="", name="", date="", time="", place=""):
+        """Build the house-by-house birth-chart prompt and generate the analysis."""
         from core.interpretation_guide import render_interpretation_guide_for_prompt
 
         prompt = ASTRO_PROMPT.format(
-            astro_data=astro_data,
-            vision=vision if vision else "تحلیل جامع زایچه",
+            name=safe_prompt_value(name or "مخاطب"),
+            when=safe_prompt_value(prompt_when(date, time, place)),
+            astro_data=safe_prompt_value(astro_data),
+            vision=safe_prompt_value(vision) if vision else "تحلیل جامع زایچه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         return self.generate_analysis(prompt, model=Config.ASTRO_MODEL)
 
-    def analyze_transit(self, transit_data, vision=""):
-        """Build the transit prompt and generate the analysis."""
-        from prompts import TRANSIT_PROMPT
+    def analyze_transit(self, transit_data, vision="", name="", date="", time="", place=""):
+        """Build the house-by-house transit prompt and generate the analysis."""
         from core.interpretation_guide import render_interpretation_guide_for_prompt
 
         prompt = TRANSIT_PROMPT.format(
-            transit_data=transit_data,
-            vision=vision if vision else "تحلیل ترانزیت لحظه",
+            name=safe_prompt_value(name or "مخاطب"),
+            when=safe_prompt_value(prompt_when(date, time, place)),
+            transit_data=safe_prompt_value(transit_data),
+            vision=safe_prompt_value(vision) if vision else "تحلیل ترانزیت لحظه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         return self.generate_analysis(prompt, model=Config.ASTRO_MODEL)
 
     def simplify_text(self, text):
-        """Simplify an astrological analysis into plain, friendly language."""
-        prompt = f"""
-متن زیر یک تحلیل نجومی است.
-تمام اصطلاحات تخصصی نجومی را حذف کن و آن را به یک متن ساده و روان تبدیل کن
-که هر فرد عادی بتواند بفهمد.
-از دادن پیشنهاد در انتها خودداری کن. متن باید مانند یک گزارش برای مخاطب باشد.
-در ابتدا یک خط توضیح بده که این گزارش چیست و سپس متن ساده شده را بنویس.
-خروجی بصورت کد HTML باشد.
-
-{text}
-"""
+        """Simplify an astrological analysis while keeping house-by-house structure."""
+        prompt = SIMPLIFY_PROMPT.format(text=safe_prompt_value(text))
         return self.generate_analysis(prompt, model=Config.SIMPLIFY_MODEL)
+
+
+_HOUSE_HEADER_RE = re.compile(
+    r'^(خانه[ٔه]?\s*[۰-۹0-9]{1,2}\b|بخش[‌\s])'
+)
 
 
 def format_analysis_html(text):
@@ -106,7 +111,7 @@ def format_analysis_html(text):
 
     - Escapes all HTML (model output is treated as untrusted text).
     - Lines made of box-drawing separators become <hr>.
-    - Section headers (lines starting with «بخش») become <h3>.
+    - Section headers (lines starting with «بخش» or «خانه N») become <h3>.
     - Blank lines split paragraphs; single newlines become <br>.
     """
     if not text:
@@ -132,7 +137,7 @@ def format_analysis_html(text):
             flush()
             blocks.append("<hr>")
             continue
-        if stripped.startswith("بخش") or stripped.startswith("بخش‌"):
+        if _HOUSE_HEADER_RE.match(stripped):
             flush()
             blocks.append(f"<h3>{html.escape(stripped)}</h3>")
             continue

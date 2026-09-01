@@ -9,7 +9,7 @@ from core.interpretation_guide import (
     render_interpretation_guide_for_prompt,
 )
 from services import AIService, AIConfigError, format_analysis_html
-from prompts import ASTRO_PROMPT, TRANSIT_PROMPT
+from prompts import ASTRO_PROMPT, TRANSIT_PROMPT, prompt_when, safe_prompt_value
 from data import get_all_cities
 from database import save_birth_chart, get_birth_chart, get_all_birth_charts
 
@@ -241,8 +241,10 @@ def view_prompt():
         astro_data = request.form.get("astro_data", "")
         
         prompt = ASTRO_PROMPT.format(
-            astro_data=astro_data,
-            vision=vision if vision else "تحلیل جامع زایچه",
+            name=safe_prompt_value(name or "مخاطب"),
+            when=safe_prompt_value(prompt_when(date, time, place)),
+            astro_data=safe_prompt_value(astro_data),
+            vision=safe_prompt_value(vision) if vision else "تحلیل جامع زایچه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         # Render template with prompt text
@@ -255,7 +257,7 @@ def view_prompt():
             vision=vision,
             prompt_text=prompt,
             prompt_title='پرامپت تحلیل زایچه تولد و سولار',
-            prompt_subtitle='خروجی: دو بخش (تولد + سولار) — متن روان، بدون HTML',
+            prompt_subtitle='خروجی: تفسیر خانه به خانه (۱ تا ۱۲) + سولار — متن روان، بدون HTML',
         )
 
     except Exception as e:
@@ -275,8 +277,10 @@ def view_transit_prompt():
         transit_data = request.form.get("transit_data", "")
 
         prompt = TRANSIT_PROMPT.format(
-            transit_data=transit_data,
-            vision=vision if vision else "تحلیل ترانزیت لحظه",
+            name=safe_prompt_value(name or "مخاطب"),
+            when=safe_prompt_value(prompt_when(date, time, place)),
+            transit_data=safe_prompt_value(transit_data),
+            vision=safe_prompt_value(vision) if vision else "تحلیل ترانزیت لحظه، خانه به خانه",
             interpretation_guide=render_interpretation_guide_for_prompt(),
         )
         return render_template(
@@ -288,7 +292,7 @@ def view_transit_prompt():
             vision=vision,
             prompt_text=prompt,
             prompt_title='پرامپت تحلیل ترانزیت لحظه',
-            prompt_subtitle='خروجی: تحلیل وضعیت فعلی — متن روان، بدون HTML',
+            prompt_subtitle='خروجی: ترانزیت خانه به خانه (۱ تا ۱۲) — متن روان، بدون HTML',
         )
     except Exception as e:
         logger.error(f"View transit prompt failed: {e}")
@@ -300,6 +304,10 @@ def analyze():
     """Send birth-chart data to the AI and return the rendered analysis (JSON)."""
     astro_data = request.form.get("astro_data", "").strip()
     vision = request.form.get("vision", "").strip()
+    name = request.form.get("name", "").strip()
+    date = request.form.get("date", "").strip()
+    time = request.form.get("time", "").strip()
+    place = request.form.get("place", "").strip()
 
     if not astro_data:
         return jsonify({"success": False, "error": "داده‌ای برای تحلیل ارسال نشد."}), 400
@@ -312,7 +320,9 @@ def analyze():
         })
 
     try:
-        analysis = ai_service.analyze_birth_chart(astro_data, vision)
+        analysis = ai_service.analyze_birth_chart(
+            astro_data, vision=vision, name=name, date=date, time=time, place=place
+        )
         return jsonify({
             "success": True,
             "analysis_html": format_analysis_html(analysis),
@@ -330,6 +340,10 @@ def analyze_transit():
     """Send transit data to the AI and return the rendered analysis (JSON)."""
     transit_data = request.form.get("transit_data", "").strip()
     vision = request.form.get("vision", "").strip()
+    name = request.form.get("name", "").strip()
+    date = request.form.get("date", "").strip()
+    time = request.form.get("time", "").strip()
+    place = request.form.get("place", "").strip()
 
     if not transit_data:
         return jsonify({"success": False, "error": "داده‌ای برای تحلیل ارسال نشد."}), 400
@@ -342,7 +356,9 @@ def analyze_transit():
         })
 
     try:
-        analysis = ai_service.analyze_transit(transit_data, vision)
+        analysis = ai_service.analyze_transit(
+            transit_data, vision=vision, name=name, date=date, time=time, place=place
+        )
         return jsonify({
             "success": True,
             "analysis_html": format_analysis_html(analysis),

@@ -64,10 +64,18 @@ copy .env.example .env
 
 ```env
 API_KEY=your_actual_api_key_here
+API_URL=https://apihub.agnes-ai.com/v1
+ASTRO_MODEL=agnes-2.0-flash
+SIMPLIFY_MODEL=agnes-2.0-flash
+SECRET_KEY=your_secret_key_here
+```
+
+پیش‌فرض رایگان **Agnes AI** است. برای GapGPT و مدل Luna:
+
+```env
 API_URL=https://api.gapgpt.app/v1
 ASTRO_MODEL=gpt-5.2
-SIMPLIFY_MODEL=gpt-4o-mini
-SECRET_KEY=your_secret_key_here
+SIMPLIFY_MODEL=gpt-5.6-luna
 ```
 
 **مهم**: حتماً `API_KEY` را با کلید واقعی API خود جایگزین کنید.
