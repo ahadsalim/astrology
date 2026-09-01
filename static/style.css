@@ -1,4 +1,9 @@
-/* Import Beautiful Persian Fonts - Local Version */
+/* ==========================================================================
+   Nojoom Atlas — Cosmic design system
+   RTL Persian astrology web app
+   ========================================================================== */
+
+/* Local Persian font (Vazirmatn) with CDN fallback */
 @font-face {
   font-family: 'Vazirmatn';
   font-style: normal;
@@ -7,7 +12,6 @@
   src: url('/static/fonts/Vazirmatn-Regular.woff2') format('woff2'),
        url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
 }
-
 @font-face {
   font-family: 'Vazirmatn';
   font-style: normal;
@@ -16,7 +20,6 @@
   src: url('/static/fonts/Vazirmatn-Medium.woff2') format('woff2'),
        url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
 }
-
 @font-face {
   font-family: 'Vazirmatn';
   font-style: normal;
@@ -26,933 +29,653 @@
        url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
 }
 
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root {
+  /* Cosmic palette */
+  --bg-950: #070a1f;
+  --bg-900: #0b1030;
+  --bg-800: #131a44;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-strong: rgba(255, 255, 255, 0.1);
+  --surface-border: rgba(157, 178, 255, 0.18);
+  --sheet: #ffffff;
+  --sheet-muted: #f5f7ff;
+
+  --ink: #eaf0ff;
+  --ink-soft: #b7c2e8;
+  --ink-muted: #8a97c4;
+  --ink-dark: #1f2547;
+
+  --primary: #7c5cff;
+  --primary-2: #9d6bff;
+  --accent: #ffcf5c;
+  --accent-2: #ff9f6b;
+  --cyan: #48d1e6;
+  --green: #34d399;
+  --red: #fb7185;
+
+  --grad-primary: linear-gradient(135deg, #7c5cff 0%, #5b8bff 100%);
+  --grad-accent: linear-gradient(135deg, #ffcf5c 0%, #ff9f6b 100%);
+  --grad-transit: linear-gradient(135deg, #48d1e6 0%, #4f7bff 100%);
+  --grad-ai: linear-gradient(135deg, #a45cff 0%, #ff7eb3 100%);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --shadow-lg: 0 24px 60px rgba(4, 8, 30, 0.55);
+  --shadow-md: 0 12px 32px rgba(4, 8, 30, 0.35);
+  --shadow-glow: 0 0 0 1px rgba(157, 178, 255, 0.14), 0 18px 48px rgba(66, 41, 168, 0.28);
+  --ring: 0 0 0 3px rgba(124, 92, 255, 0.28);
+
+  --maxw: 1080px;
 }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
-    font-family: 'Vazirmatn', 'Tahoma', sans-serif;
-    background: white;
-    direction: rtl;
-    padding: 20px;
-    min-height: 100vh;
-    line-height: 1.8;
+  font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+  direction: rtl;
+  color: var(--ink);
+  line-height: 1.85;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 700px at 85% -10%, rgba(124, 92, 255, 0.35), transparent 60%),
+    radial-gradient(1000px 600px at 5% 5%, rgba(72, 209, 230, 0.18), transparent 55%),
+    radial-gradient(900px 900px at 50% 120%, rgba(255, 159, 107, 0.12), transparent 60%),
+    linear-gradient(180deg, var(--bg-950) 0%, var(--bg-900) 45%, var(--bg-800) 100%);
+  background-attachment: fixed;
 }
 
-/* Container Styles */
-.container {
-    background: white;
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: fadeIn 0.5s ease-in;
+/* Starfield overlay */
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 20% 30%, rgba(255,255,255,0.9), transparent),
+    radial-gradient(1.4px 1.4px at 75% 15%, rgba(255,255,255,0.75), transparent),
+    radial-gradient(1.2px 1.2px at 40% 70%, rgba(255,255,255,0.65), transparent),
+    radial-gradient(1.8px 1.8px at 88% 60%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1.2px 1.2px at 12% 82%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1.5px 1.5px at 60% 42%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.1px 1.1px at 30% 12%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.3px 1.3px at 92% 28%, rgba(255,255,255,0.6), transparent);
+  animation: twinkle 6s ease-in-out infinite alternate;
 }
+@keyframes twinkle { from { opacity: 0.55; } to { opacity: 0.95; } }
 
-.result-container {
-    background: white;
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: fadeIn 0.5s ease-in;
+/* Layout wrappers */
+.page { position: relative; z-index: 1; }
+
+.container,
+.result-container,
+.shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 28px auto;
+  padding: 0 20px 56px;
 }
+.container { max-width: 640px; }
 
-.error-container {
-    text-align: center;
-    max-width: 600px;
+/* ===================== Navbar ===================== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(14px);
+  background: rgba(9, 13, 40, 0.72);
+  border-bottom: 1px solid var(--surface-border);
 }
-
-/* Header Styles */
-.header {
-    text-align: center;
-    margin-bottom: 30px;
+.navbar__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
-
-.logo {
-    font-size: 48px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #1a1a1a;
-    animation: pulse 2s infinite;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
-
-h1 {
-    color: #2c3e50;
-    font-size: 28px;
-    margin-bottom: 10px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-weight: 700;
+.brand__mark {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--grad-primary);
+  box-shadow: var(--shadow-glow);
+  font-size: 18px;
 }
-
-h2 {
-    color: #34495e;
-    font-size: 20px;
-    margin: 20px 0 10px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-weight: 600;
+.brand__name b { color: #fff; }
+.brand__name span { color: var(--accent); }
+.nav-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nav-links a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
 }
+.nav-links a:hover { color: #fff; background: var(--surface); }
+.nav-links a.active { color: #fff; background: var(--surface-strong); }
 
-h3 {
-    color: #555;
-    font-size: 18px;
-    margin: 20px 0 10px 0;
-    font-family: 'Vazirmatn', sans-serif;
+/* ===================== Hero / headers ===================== */
+.hero { text-align: center; padding: 30px 0 10px; }
+.hero__logo {
+  width: 76px; height: 76px; margin: 0 auto 14px;
+  display: grid; place-items: center;
+  font-size: 40px;
+  border-radius: 24px;
+  background: var(--grad-primary);
+  box-shadow: var(--shadow-glow);
+  animation: float 4s ease-in-out infinite;
 }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 
-h4 {
-    color: #666;
-    font-size: 16px;
-    margin: 15px 0 10px 0;
+h1 { font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; letter-spacing: -0.01em; }
+.hero h1 {
+  background: linear-gradient(120deg, #fff, #cbd6ff 60%, var(--accent));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+.hero .subtitle, .subtitle { color: var(--ink-soft); font-size: 0.98rem; margin-top: 8px; }
 
-.subtitle {
-    color: #555;
-    font-size: 14px;
-    margin-top: 5px;
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.section-head h1, .section-head h2 { color: #fff; }
+
+/* ===================== Cards / glass ===================== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 26px;
+  backdrop-filter: blur(10px);
 }
+.card + .card { margin-top: 20px; }
 
-/* Info Box */
+/* A white "sheet" for dense data (tables) */
+.sheet {
+  background: var(--sheet);
+  color: var(--ink-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 26px;
+}
+.sheet h1, .sheet h2, .sheet h3, .sheet h4 { color: var(--ink-dark); }
+
+/* ===================== Info box ===================== */
 .info-box {
-    background: #e8f4f8;
-    border-right: 4px solid #3498db;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-    border-radius: 8px;
+  background: rgba(72, 209, 230, 0.1);
+  border: 1px solid rgba(72, 209, 230, 0.28);
+  border-right: 4px solid var(--cyan);
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 22px;
+  color: var(--ink-soft);
 }
+.info-box strong { color: #bfefff; }
+.info-box ul { margin-right: 18px; margin-top: 6px; }
+.info-box li { margin-bottom: 4px; font-size: 0.86rem; }
 
-.info-box strong {
-    color: #2980b9;
-}
-
-.info-box ul {
-    margin-right: 20px;
-    color: #34495e;
-}
-
-.info-box li {
-    margin-bottom: 5px;
-    font-size: 13px;
-}
-
-/* Form Styles */
-.form-group {
-    margin-bottom: 20px;
-}
-
-.birth-form .form-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.birth-form .form-row > label {
-    flex: 0 0 148px;
-    margin-bottom: 0;
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-.birth-form .form-row .field-wrap {
-    flex: 1;
-    min-width: 0;
-}
-
-.birth-form .form-row--textarea {
-    align-items: flex-start;
-}
-
-.birth-form .form-row--textarea > label {
-    padding-top: 10px;
-}
-
-.birth-form .date-picker {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.birth-form .date-picker select {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 8px;
-}
-
-.birth-form .date-picker .date-part-day {
-    flex: 0.85;
-}
-
-.birth-form .date-picker .date-part-month {
-    flex: 1.35;
-}
-
-.birth-form .date-picker .date-part-year {
-    flex: 1;
-}
-
-.birth-form .help-text {
-    margin-top: 4px;
-    font-size: 11px;
-}
-
-.birth-form textarea {
-    min-height: 64px;
-}
-
-.birth-form .info-box {
-    padding: 10px 14px;
-    margin-bottom: 16px;
-}
-
-.birth-form .info-box ul {
-    margin: 6px 18px 0 0;
-}
-
-.birth-form .info-box li {
-    margin-bottom: 2px;
-    font-size: 12px;
-}
-
-@media (max-width: 560px) {
-    .birth-form .form-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-    }
-
-    .birth-form .form-row > label {
-        flex: none;
-        padding-top: 0;
-    }
-}
-
-label {
-    display: block;
-    color: #2c3e50;
-    font-weight: bold;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
+/* ===================== Forms ===================== */
+label { display: block; color: var(--ink-soft); font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
 
 input[type="text"],
+input[type="number"],
+input[type="time"],
 textarea,
 select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    transition: all 0.3s ease;
-    background: #fafafa;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: rgba(9, 13, 40, 0.55);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
+input::placeholder, textarea::placeholder { color: var(--ink-muted); }
+select option { color: #10163a; background: #eef1ff; }
 
 input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="time"]:focus,
 textarea:focus,
 select:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+  border-color: var(--primary-2);
+  background: rgba(9, 13, 40, 0.85);
+  box-shadow: var(--ring);
+}
+input:disabled, select:disabled { opacity: 0.55; cursor: not-allowed; }
+textarea { resize: vertical; min-height: 74px; }
+.help-text { font-size: 0.78rem; color: var(--ink-muted); margin-top: 6px; }
+
+/* Birth form rows */
+.birth-form .form-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.birth-form .form-row > label { flex: 0 0 150px; margin-bottom: 0; }
+.birth-form .form-row .field-wrap { flex: 1; min-width: 0; }
+.birth-form .form-row--textarea { align-items: flex-start; }
+.birth-form .form-row--textarea > label { padding-top: 10px; }
+.birth-form .date-picker { display: flex; gap: 8px; }
+.birth-form .date-picker select { flex: 1; min-width: 0; padding: 12px 8px; }
+.birth-form .date-part-day { flex: 0.8 !important; }
+.birth-form .date-part-month { flex: 1.4 !important; }
+
+@media (max-width: 560px) {
+  .birth-form .form-row { flex-direction: column; align-items: stretch; gap: 6px; }
+  .birth-form .form-row > label { flex: none; }
 }
 
-input[type="text"]:disabled,
-select:disabled {
-    background: #f5f5f5;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-.help-text {
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
-}
-
-/* Button Styles */
+/* ===================== Buttons ===================== */
+.btn,
 button,
 .btn-primary,
 .btn-secondary {
-    padding: 14px 28px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: 'Tahoma', sans-serif;
-    font-size: 15px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    display: inline-block;
-    text-align: center;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: var(--radius-xs);
+  padding: 12px 22px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #fff;
 }
+.btn:active, button:active { transform: translateY(1px); }
 
 .btn-primary {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    margin-top: 10px;
+  width: 100%;
+  padding: 14px;
+  background: var(--grad-primary);
+  box-shadow: 0 10px 26px rgba(124, 92, 255, 0.4);
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(124, 92, 255, 0.55); }
+
+.btn-accent { background: var(--grad-accent); color: #3a2600; box-shadow: 0 10px 26px rgba(255, 159, 107, 0.35); }
+.btn-accent:hover:not(:disabled) { transform: translateY(-2px); }
+
+.btn-transit { background: var(--grad-transit); box-shadow: 0 10px 26px rgba(72, 209, 230, 0.32); }
+.btn-transit:hover:not(:disabled) { transform: translateY(-2px); }
+
+.btn-ai { background: var(--grad-ai); box-shadow: 0 12px 30px rgba(164, 92, 255, 0.45); }
+.btn-ai:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(164, 92, 255, 0.6); }
+
+.btn-secondary,
+.btn-ghost {
+  background: var(--surface-strong);
+  color: var(--ink);
+  border: 1px solid var(--surface-border);
+}
+.btn-secondary:hover, .btn-ghost:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
+
+.btn-danger { background: linear-gradient(135deg, #f43f5e, #b91c47); }
+
+button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-sm { padding: 9px 14px; font-size: 0.85rem; }
+.btn-block { width: 100%; }
+
+.form-actions-dual { display: flex; gap: 12px; margin-top: 14px; }
+.form-actions-dual .btn { flex: 1; }
+.btn-primary--compact { width: auto; }
+
+.action-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 22px; }
+.btn-group { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+@media (max-width: 560px) {
+  .form-actions-dual { flex-direction: column; }
 }
 
-.form-actions-dual {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    align-items: stretch;
+/* ===================== Spinner ===================== */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+.spinner--lg { width: 42px; height: 42px; border-width: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===================== AI analysis panel ===================== */
+.ai-panel {
+  margin-top: 22px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(164, 92, 255, 0.4);
+  background: linear-gradient(180deg, rgba(46, 26, 82, 0.65), rgba(20, 16, 48, 0.75));
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.ai-panel__head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px;
+  background: var(--grad-ai);
+  color: #fff;
+  font-weight: 700;
+}
+.ai-panel__head .badge {
+  margin-inline-start: auto;
+  font-size: 0.72rem;
+  background: rgba(0,0,0,0.25);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.ai-panel__body { padding: 20px 22px; }
+
+.ai-loading {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 34px 10px; color: var(--ink-soft); text-align: center;
+}
+.ai-orbit { position: relative; width: 64px; height: 64px; }
+.ai-orbit::before {
+  content: "🔮"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 30px;
+  animation: float 2.4s ease-in-out infinite;
+}
+.ai-orbit::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 2px dashed rgba(164, 92, 255, 0.55); animation: spin 6s linear infinite;
 }
 
-.btn-primary--compact {
-    flex: 0 1 auto;
-    width: auto;
-    min-width: 0;
-    padding: 11px 18px;
-    font-size: 14px;
-    margin-top: 0;
-    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
+.ai-analysis { color: #f0f2ff; font-size: 1rem; line-height: 2; }
+.ai-analysis p { margin: 0 0 14px; text-align: justify; }
+.ai-analysis h3 {
+  color: var(--accent);
+  font-size: 1.08rem;
+  margin: 22px 0 10px;
+  padding-inline-start: 12px;
+  border-inline-start: 4px solid var(--accent);
+}
+.ai-analysis hr { border: none; border-top: 1px dashed rgba(157,178,255,0.3); margin: 18px 0; }
+
+.ai-error {
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  color: #ffd7dd;
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+}
+.ai-error code {
+  background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 6px;
+  direction: ltr; unicode-bidi: isolate; display: inline-block;
 }
 
-.btn-transit {
-    flex: 1;
-    padding: 11px 18px;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-family: 'Vazirmatn', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.35);
-}
-
-.btn-transit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 16px rgba(52, 152, 219, 0.5);
-}
-
-@media (max-width: 520px) {
-    .form-actions-dual {
-        flex-direction: column;
-    }
-    .btn-primary--compact,
-    .btn-transit {
-        width: 100%;
-        flex: 1 1 auto;
-    }
-}
-
-.btn-primary:hover,
-button[type="submit"]:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-.btn-primary:active,
-button[type="submit"]:active {
-    transform: translateY(0);
-}
-
-button[type="submit"]:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.btn-secondary {
-    background: #ecf0f1;
-    color: #2c3e50;
-    margin: 5px;
-}
-
-.btn-secondary:hover {
-    background: #bdc3c7;
-    transform: translateY(-2px);
-}
-
-/* Result Box */
-.result-box {
-    background: #fafafa;
-    padding: 30px;
-    border-radius: 12px;
-    max-height: 70vh;
-    overflow-y: auto;
-    border: 1px solid #e0e0e0;
-    margin-bottom: 20px;
-    line-height: 1.8;
-}
-
-.result-box::-webkit-scrollbar {
-    width: 8px;
-}
-
-.result-box::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.result-box::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-.result-box::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* Astro Data Styles */
-.astro-data {
-    margin: 20px 0;
-}
-
-.zodiac-sign-cell {
-    font-weight: 700;
-    text-align: center !important;
-}
-
-.astro-table tr:nth-child(even) td.zodiac-fire,
-.astro-table td.zodiac-fire {
-    background: #ff9a4d !important;
-    color: #4a1f00;
-}
-
-.astro-table tr:nth-child(even) td.zodiac-water,
-.astro-table td.zodiac-water {
-    background: #4a9fd8 !important;
-    color: #062a45;
-}
-
-.astro-table tr:nth-child(even) td.zodiac-air,
-.astro-table td.zodiac-air {
-    background: #9ed4f5 !important;
-    color: #123a5c;
-}
-
-.astro-table tr:nth-child(even) td.zodiac-earth,
-.astro-table td.zodiac-earth {
-    background: #d4b896 !important;
-    color: #3d2e1a;
-}
-
-.sign-modality-cell {
-    font-weight: 600;
-}
-
-.houses-table .sign-character-cell {
-    font-size: 0.78em;
-    line-height: 1.35;
-    text-align: right;
-    min-width: 7.5em;
-}
-
-.astro-table tr:nth-child(even) td.house-num-odd,
-.astro-table td.house-num-odd {
-    background: #4a90d9 !important;
-    color: #fff;
-    font-weight: 700;
-}
-
-.astro-table tr:nth-child(even) td.house-num-even,
-.astro-table td.house-num-even {
-    background: #f8a5c8 !important;
-    color: #5a2040;
-    font-weight: 700;
-}
-
-.astro-table tr:nth-child(even) td.house-name-pink,
-.astro-table td.house-name-pink {
-    background: #f8a5c8 !important;
-    color: #5a2040;
-    font-weight: 600;
-}
-
-.astro-table tr:nth-child(even) td.house-name-blue,
-.astro-table td.house-name-blue {
-    background: #4a90d9 !important;
-    color: #fff;
-    font-weight: 600;
-}
-
-.astro-table tr:nth-child(even) td.sign-sect-day,
-.astro-table td.sign-sect-day {
-    background: #fff3c4 !important;
-    color: #7a5a00;
-    font-weight: 700;
-}
-
-.astro-table tr:nth-child(even) td.sign-sect-night,
-.astro-table td.sign-sect-night {
-    background: #2c3e6e !important;
-    color: #e8eaf6;
-    font-weight: 700;
-}
-
-.astro-table tr:nth-child(even) td.dignity--fall_degree,
-.astro-table td.dignity--fall_degree {
-    background: #4a0e0e !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.dignity--detriment,
-.astro-table td.dignity--detriment {
-    background: #a93226 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.dignity--fall_sign,
-.astro-table td.dignity--fall_sign {
-    background: #f0b4b4 !important;
-    color: #5c2020;
-}
-
-.astro-table tr:nth-child(even) td.dignity--exaltation_sign,
-.astro-table td.dignity--exaltation_sign {
-    background: #b8e6b8 !important;
-    color: #1a4d1a;
-}
-
-.astro-table tr:nth-child(even) td.dignity--rulership,
-.astro-table td.dignity--rulership {
-    background: #27ae60 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.dignity--exaltation_degree,
-.astro-table td.dignity--exaltation_degree {
-    background: #0b5345 !important;
-    color: #fff;
-}
-
-.aspects-table td.aspect-cell {
-    font-weight: 700;
-    text-align: center !important;
-}
-
-.astro-table tr:nth-child(even) td.aspect--conjunction,
-.astro-table td.aspect--conjunction {
-    background: #5b4a8a !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.aspect--opposition,
-.astro-table td.aspect--opposition {
-    background: #4a0e0e !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.aspect--trine,
-.astro-table td.aspect--trine {
-    background: #0b5345 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.aspect--square,
-.astro-table td.aspect--square {
-    background: #a93226 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.aspect--sextile,
-.astro-table td.aspect--sextile {
-    background: #b8e6b8 !important;
-    color: #1a4d1a;
-}
-
-.info-sect-day {
-    color: #b8860b;
-    font-weight: 700;
-}
-
-.info-sect-night {
-    color: #4338ca;
-    font-weight: 700;
-}
-
-.astro-methodology-note {
-    margin: 24px 0 8px;
-    padding: 12px 16px;
-    background: #f4f6f8;
-    border-right: 4px solid #95a5a6;
-    border-radius: 6px;
-    color: #555;
-    font-size: 0.88em;
-    line-height: 1.7;
-    text-align: justify;
+/* ===================== Data tables (astro) ===================== */
+.section-title {
+  font-size: 1.05rem; font-weight: 700; margin: 22px 0 10px;
+  color: var(--ink-dark);
+  padding-inline-start: 10px;
+  border-inline-start: 4px solid var(--primary);
 }
 
 .astro-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    font-family: 'Vazirmatn', sans-serif;
+  width: 100%; border-collapse: collapse; margin: 14px 0; background: #fff;
+  border-radius: var(--radius-sm); overflow: hidden;
+  box-shadow: 0 4px 16px rgba(20, 20, 60, 0.08);
+  font-family: inherit; color: var(--ink-dark);
 }
-
 .astro-table th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px;
-    text-align: right;
-    font-weight: bold;
+  background: var(--grad-primary); color: #fff; padding: 11px 10px; text-align: center; font-weight: 700;
 }
+.astro-table td { padding: 9px 10px; border-bottom: 1px solid #eceefc; text-align: center; }
+.astro-table tr:last-child td { border-bottom: none; }
+.astro-table tr:nth-child(even) { background: #f6f7ff; }
 
-.houses-table .houses-table-head th {
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    text-align: center;
-    vertical-align: middle;
-}
-
-.houses-table .houses-head-row1 th {
-    background: linear-gradient(135deg, #2c3e50 0%, #3d566e 100%);
-    font-size: 1.05em;
-    font-weight: 800;
-    padding: 10px 6px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.85);
-    letter-spacing: 0.02em;
-}
-
-.houses-table .houses-head-group--house {
-    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
-}
-
-.houses-table .houses-head-group--sign {
-    border-left: 2px solid rgba(255, 255, 255, 0.9) !important;
-    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
-}
-
-.houses-table .houses-head-row2 th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    font-size: 0.82em;
-    font-weight: 600;
-    padding: 8px 4px;
-}
-
-.houses-table .houses-head-col--group-end {
-    border-right: 2px solid rgba(255, 255, 255, 0.9) !important;
-}
-
-.houses-table .houses-table-body td.houses-group-end {
-    border-right: 2px solid #95a5a6 !important;
-}
-
-.astro-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #e0e0e0;
-    text-align: right;
-}
-
-.astro-table tr:last-child td {
-    border-bottom: none;
-}
-
-.astro-table tr:nth-child(even) {
-    background: #f8f9fa;
-}
-
-/* Info Table - Personal Information (all white background) */
 .info-table {
-    width: 100%;
-    margin: 20px 0;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    font-family: 'Vazirmatn', sans-serif;
+  width: 100%; border-collapse: collapse; margin: 12px 0; background: #fff;
+  border-radius: var(--radius-sm); overflow: hidden; color: var(--ink-dark);
+  box-shadow: 0 4px 16px rgba(20, 20, 60, 0.08);
+}
+.info-table td { padding: 10px 14px; border: 1px solid #eceefc; text-align: right; }
+.info-table td:nth-child(odd) { background: #f6f7ff; font-weight: 600; color: #2a2f57; }
+
+/* Zodiac element cells */
+.zodiac-sign-cell { font-weight: 700; text-align: center !important; }
+.astro-table td.zodiac-fire { background: #ff9a4d !important; color: #4a1f00; }
+.astro-table td.zodiac-water { background: #4a9fd8 !important; color: #062a45; }
+.astro-table td.zodiac-air { background: #9ed4f5 !important; color: #123a5c; }
+.astro-table td.zodiac-earth { background: #d4b896 !important; color: #3d2e1a; }
+.sign-modality-cell { font-weight: 600; }
+.houses-table .sign-character-cell { font-size: 0.78em; line-height: 1.35; text-align: right; min-width: 7.5em; }
+
+/* Houses numbering / naming */
+.astro-table td.house-num-odd { background: #4a90d9 !important; color: #fff; font-weight: 700; }
+.astro-table td.house-num-even { background: #f8a5c8 !important; color: #5a2040; font-weight: 700; }
+.astro-table td.house-name-pink { background: #f8a5c8 !important; color: #5a2040; font-weight: 600; }
+.astro-table td.house-name-blue { background: #4a90d9 !important; color: #fff; font-weight: 600; }
+.astro-table td.sign-sect-day { background: #fff3c4 !important; color: #7a5a00; font-weight: 700; }
+.astro-table td.sign-sect-night { background: #2c3e6e !important; color: #e8eaf6; font-weight: 700; }
+
+/* Dignities */
+.astro-table td.dignity-cell { font-weight: 700; text-align: center !important; }
+.astro-table td.dignity--fall_degree { background: #4a0e0e !important; color: #fff; }
+.astro-table td.dignity--detriment { background: #a93226 !important; color: #fff; }
+.astro-table td.dignity--fall_sign { background: #f0b4b4 !important; color: #5c2020; }
+.astro-table td.dignity--exaltation_sign { background: #b8e6b8 !important; color: #1a4d1a; }
+.astro-table td.dignity--rulership { background: #27ae60 !important; color: #fff; }
+.astro-table td.dignity--exaltation_degree { background: #0b5345 !important; color: #fff; }
+
+/* Aspects */
+.aspects-table td.aspect-cell { font-weight: 700; text-align: center !important; }
+.astro-table td.aspect--conjunction { background: #5b4a8a !important; color: #fff; }
+.astro-table td.aspect--opposition { background: #4a0e0e !important; color: #fff; }
+.astro-table td.aspect--trine { background: #0b5345 !important; color: #fff; }
+.astro-table td.aspect--square { background: #a93226 !important; color: #fff; }
+.astro-table td.aspect--sextile { background: #b8e6b8 !important; color: #1a4d1a; }
+
+/* Houses multi-row header */
+.houses-table .houses-table-head th { border: 1px solid rgba(255,255,255,0.45); text-align: center; vertical-align: middle; }
+.houses-table .houses-head-row1 th {
+  background: linear-gradient(135deg, #2a2f57 0%, #3b4278 100%);
+  font-size: 1.02em; font-weight: 800; padding: 9px 6px;
+  border-bottom: 2px solid rgba(255,255,255,0.8);
+}
+.houses-table .houses-head-group--house { border-right: 2px solid rgba(255,255,255,0.9) !important; }
+.houses-table .houses-head-group--sign { border-left: 2px solid rgba(255,255,255,0.9) !important; border-right: 2px solid rgba(255,255,255,0.9) !important; }
+.houses-table .houses-head-row2 th { background: var(--grad-primary); font-size: 0.82em; font-weight: 600; padding: 7px 4px; }
+.houses-table .houses-head-col--group-end { border-right: 2px solid rgba(255,255,255,0.9) !important; }
+.houses-table .houses-table-body td.houses-group-end { border-right: 2px solid #cfd5f5 !important; }
+
+/* Vedic special states */
+.astro-table td.vedic-td { text-align: center; white-space: nowrap; font-weight: 600; }
+.astro-table td.vedic-td--pushkara { background: #28a745 !important; color: #fff; }
+.astro-table td.vedic-td--vargottama { background: #ffc107 !important; color: #1a1a1a; }
+.astro-table td.vedic-td--ashtamamsa { background: #dc3545 !important; color: #fff; }
+.astro-table td.vedic-td--gandanta { background: #1a0505 !important; color: #fff; }
+.astro-table td.vedic-td--multi { background: #fff !important; color: #333; font-weight: 600; }
+.vedic-label--pushkara { color: #28a745; }
+.vedic-label--vargottama { color: #c99700; }
+.vedic-label--ashtamamsa { color: #dc3545; }
+.vedic-label--gandanta { color: #1a0505; }
+.vedic-sep { color: #999; font-weight: 400; }
+
+/* Notes */
+.astro-methodology-note {
+  margin: 22px 0 6px; padding: 12px 16px; background: #f4f6ff;
+  border-inline-start: 4px solid #b3bce6; border-radius: 8px;
+  color: #555c86; font-size: 0.85em; line-height: 1.7; text-align: justify;
+}
+.solar-intro-note {
+  margin: 6px 0 12px; padding: 10px 14px; background: #fff7e6;
+  border-inline-start: 4px solid var(--accent); border-radius: 8px;
+  color: #6b5424; font-size: 0.86em; line-height: 1.65; text-align: justify;
 }
 
-.info-table td {
-    padding: 12px 15px;
-    border: 1px solid #e0e0e0;
-    text-align: right;
-    background: white !important;  /* Force white background for all cells */
+/* Chart wheel image */
+.chart-wheel-wrap { text-align: center; margin: 16px 0 22px; }
+.chart-wheel-img {
+  max-width: min(100%, 540px); height: auto;
+  border-radius: 16px; border: 1px solid #e2e6ff;
+  box-shadow: 0 10px 30px rgba(44, 40, 100, 0.16); background: #fbfbff;
 }
 
-.info-table tr:first-child td:first-child,
-.info-table tr td:nth-child(odd) {
-    font-weight: 600;
-    color: #2c3e50;
-    background: white !important;
+/* Geographic coordinates */
+.geo-dms, .arc-dms {
+  direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums;
+  white-space: nowrap; font-size: 0.95em;
+}
+.geo-coords-cell { vertical-align: middle; }
+.geo-coords-block { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.asc-sign-symbol { font-size: 1.25em; line-height: 1; margin-inline-end: 4px; }
+.info-sect-day { color: #b8860b; font-weight: 700; }
+.info-sect-night { color: #4338ca; font-weight: 700; }
+
+/* ===================== Chips / meta ===================== */
+.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 6px 0 4px; }
+.meta-item {
+  background: var(--surface); border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+}
+.meta-item .k { font-size: 0.74rem; color: var(--ink-muted); }
+.meta-item .v { font-size: 0.98rem; color: #fff; font-weight: 600; margin-top: 2px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px; font-size: 0.8rem;
+  background: var(--surface-strong); border: 1px solid var(--surface-border); color: var(--ink-soft);
 }
 
-.info-section {
-    background: #e8f4f8;
-    padding: 15px;
-    border-radius: 8px;
-    margin: 15px 0;
+/* ===================== Legend (results) ===================== */
+.legend-card { padding: 16px; }
+.color-legend-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.72rem; color: var(--ink-dark); background: #fff; border-radius: 10px; overflow: hidden; }
+.color-legend-table th { background: #2a2f57; color: #fff; padding: 6px 3px; text-align: center; }
+.color-legend-table td { padding: 3px 3px; border: 1px solid #edeffb; vertical-align: middle; }
+.color-legend-table td.legend-swatch-col { width: 16px; text-align: center; }
+.legend-swatch { display: inline-block; width: 14px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.12); vertical-align: middle; }
+.legend-group td { background: #eef1ff; font-weight: 700; color: #2a2f57; text-align: center; }
+.legend-group-sub { font-size: 0.82em; font-weight: 500; display: block; }
+.color-legend-table td.legend-split-left { border-right: 2px solid #cfd5f5; }
+
+/* ===================== Charts list ===================== */
+.data-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: var(--radius-sm); background: #fff; color: var(--ink-dark); }
+.data-table th { background: var(--grad-primary); color: #fff; padding: 13px; text-align: right; font-weight: 700; }
+.data-table td { padding: 12px 13px; border-bottom: 1px solid #eceefc; text-align: right; }
+.data-table tr:hover td { background: #f4f6ff; }
+.empty-state { text-align: center; padding: 48px 16px; color: var(--ink-soft); }
+.empty-state .emoji { font-size: 54px; display: block; margin-bottom: 10px; }
+
+/* ===================== Modal ===================== */
+.modal { display: none; position: fixed; inset: 0; z-index: 1000; }
+.modal.is-open, .modal[style*="block"] { display: block; }
+.modal-backdrop, .modal::before { }
+.modal-content {
+  position: relative; background: #fff; color: var(--ink-dark);
+  margin: 6vh auto; padding: 28px; border-radius: var(--radius);
+  width: 92%; max-width: 520px; box-shadow: var(--shadow-lg);
+}
+.modal-header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #eef1ff; }
+.modal-header h2 { color: var(--ink-dark); }
+.close { color: #99a; float: left; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
+.close:hover { color: #333; }
+
+/* Interpretation guide modal (results page) */
+.interp-guide-link {
+  display: inline-block; margin-top: 8px; font-size: 0.9rem; color: #cfd8ff;
+  cursor: pointer; text-decoration: none; border-bottom: 1px dashed #9fb0ff;
+}
+.interp-guide-link:hover { color: #fff; }
+.interp-modal { display: none; position: fixed; inset: 0; z-index: 10000; }
+.interp-modal.is-open { display: block; }
+.interp-modal-backdrop { position: absolute; inset: 0; background: rgba(3,6,20,0.7); backdrop-filter: blur(3px); }
+.interp-modal-panel {
+  position: relative; margin: 3vh auto; width: min(94vw, 880px); max-height: 94vh;
+  background: #fff; color: var(--ink-dark); border-radius: 14px; box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.interp-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--grad-primary); color: #fff; }
+.interp-modal-header h2 { margin: 0; font-size: 1.05em; color: #fff; }
+.interp-modal-close { background: transparent; border: none; color: #fff; font-size: 1.6em; line-height: 1; cursor: pointer; padding: 0 4px; }
+.interp-modal-body { padding: 16px 18px 20px; overflow-y: auto; font-size: 0.86em; line-height: 1.6; }
+.interp-guide-intro { margin: 0 0 14px; color: #555; text-align: justify; }
+.interp-guide-section { margin: 18px 0 8px; font-size: 1em; color: #2a2f57; border-inline-start: 4px solid var(--primary); padding-inline-start: 8px; }
+.interp-guide-sub { margin: 10px 0 6px; font-size: 0.92em; color: #34406e; }
+.interp-guide-note { margin: 8px 0; color: #666; font-size: 0.9em; text-align: justify; }
+.interp-guide-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 0.88em; }
+.interp-guide-table th { background: #eef1ff; color: #2a2f57; padding: 6px 5px; border: 1px solid #d9def7; text-align: center; font-weight: 700; }
+.interp-guide-table td { padding: 5px 6px; border: 1px solid #e6e9fb; vertical-align: top; text-align: right; }
+.interp-guide-table tr:nth-child(even) td { background: #fafbff; }
+
+/* ===================== Alerts ===================== */
+.alert { padding: 14px 16px; margin-bottom: 18px; border-radius: var(--radius-sm); display: none; }
+.alert-success { background: rgba(52, 211, 153, 0.15); color: #b6f4dd; border: 1px solid rgba(52, 211, 153, 0.4); }
+.alert-error { background: rgba(251, 113, 133, 0.14); color: #ffd7dd; border: 1px solid rgba(251, 113, 133, 0.4); }
+
+/* Toolbar */
+.page-top-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.btn-print-top {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--surface-strong);
+  color: var(--ink); border: 1px solid var(--surface-border); border-radius: 10px;
+  padding: 9px 14px; font-size: 0.85rem; cursor: pointer;
+}
+.btn-print-top:hover { background: rgba(255,255,255,0.16); }
+.btn-print-top svg { width: 18px; height: 18px; }
+
+.transit-time-banner {
+  background: rgba(72,209,230,0.12); border: 1px solid rgba(72,209,230,0.3);
+  border-inline-start: 4px solid var(--cyan);
+  padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 16px;
+  font-size: 0.9rem; color: var(--ink-soft); text-align: center;
 }
 
-.info-section p {
-    margin: 5px 0;
-    color: #2c3e50;
-}
+/* Footer */
+.footer { text-align: center; color: var(--ink-muted); font-size: 0.82rem; padding: 26px 16px 40px; position: relative; z-index: 1; }
+.footer a { color: var(--ink-soft); text-decoration: none; }
 
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-}
+.coord-preview { margin: 0 0 12px; padding: 10px 12px; background: var(--surface); border-radius: 8px; font-size: 0.86rem; color: var(--ink-soft); direction: ltr; unicode-bidi: isolate; text-align: left; }
+.coord-preview:empty { display: none; }
 
-/* Error Styles */
-.error-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
+/* Result box (AI plain text) */
+.result-box {
+  background: #fff; color: var(--ink-dark); padding: 26px; border-radius: var(--radius);
+  border: 1px solid #e6e9fb; box-shadow: var(--shadow-lg); line-height: 2;
+  max-height: 72vh; overflow-y: auto; white-space: normal;
 }
+.result-box p { margin: 0 0 12px; }
 
-.error-message {
-    background: #fee;
-    border: 2px solid #fcc;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    color: #c33;
-}
+/* ===================== Utilities ===================== */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 10px; } .mt-2 { margin-top: 20px; } .mt-3 { margin-top: 30px; }
+.hidden { display: none !important; }
 
-.error-message p {
-    margin: 0;
-    font-size: 16px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-/* Print Styles */
-@page {
-    size: A4 landscape;
-    margin: 8mm;
-}
-
-@media print {
-    body {
-        background: white;
-        padding: 0;
-    }
-    
-    .container,
-    .result-container {
-        box-shadow: none;
-        margin: 0;
-        padding: 20px;
-    }
-    
-    button,
-    .btn-primary,
-    .btn-secondary,
-    .action-buttons {
-        display: none !important;
-    }
-    
-    .result-box {
-        max-height: none;
-        overflow: visible;
-        border: none;
-    }
-}
-
-/* Responsive Design */
+/* ===================== Responsive ===================== */
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    
-    .container,
-    .result-container {
-        padding: 20px;
-        margin: 20px auto;
-        border-radius: 15px;
-    }
-    
-    h1 {
-        font-size: 22px;
-    }
-    
-    .logo {
-        font-size: 36px;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .btn-secondary {
-        width: 100%;
-        margin: 5px 0;
-    }
-    
-    .result-box {
-        padding: 20px;
-        max-height: 60vh;
-    }
-    
-    .astro-table {
-        font-size: 13px;
-    }
-    
-    .astro-table th,
-    .astro-table td {
-        padding: 8px;
-    }
+  .container, .result-container, .shell { padding: 0 14px 40px; }
+  .card, .sheet { padding: 18px; }
+  .astro-table { font-size: 0.82rem; }
+  .astro-table th, .astro-table td { padding: 7px 6px; }
+  .nav-links a { padding: 7px 9px; font-size: 0.82rem; }
 }
 
-@media (max-width: 480px) {
-    .container,
-    .result-container {
-        padding: 15px;
-    }
-    
-    h1 {
-        font-size: 20px;
-    }
-    
-    input[type="text"],
-    textarea,
-    select,
-    button {
-        font-size: 13px;
-    }
-    
-    .astro-table {
-        font-size: 12px;
-    }
-}
-
-/* Geographic coordinates (DMS) */
-.geo-dms,
-.arc-dms {
-    direction: ltr;
-    unicode-bidi: isolate;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    font-size: 0.95em;
-    color: #2c3e50;
-}
-
-.geo-coords-cell {
-    vertical-align: middle;
-}
-
-.geo-coords-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
-}
-
-/* Vedic special states column */
-.astro-table td.vedic-td {
-    text-align: center;
-    white-space: nowrap;
-    font-weight: 600;
-}
-
-.astro-table tr:nth-child(even) td.vedic-td--pushkara,
-.astro-table td.vedic-td--pushkara {
-    background: #28a745 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.vedic-td--vargottama,
-.astro-table td.vedic-td--vargottama {
-    background: #ffc107 !important;
-    color: #1a1a1a;
-}
-
-.astro-table tr:nth-child(even) td.vedic-td--ashtamamsa,
-.astro-table td.vedic-td--ashtamamsa {
-    background: #dc3545 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.vedic-td--gandanta,
-.astro-table td.vedic-td--gandanta {
-    background: #1a0505 !important;
-    color: #fff;
-}
-
-.astro-table tr:nth-child(even) td.vedic-td--multi,
-.astro-table td.vedic-td--multi {
-    background: #fff !important;
-    color: #333;
-    font-weight: 600;
-}
-
-.vedic-label--pushkara {
-    color: #28a745;
-}
-
-.vedic-label--vargottama {
-    color: #c99700;
-}
-
-.vedic-label--ashtamamsa {
-    color: #dc3545;
-}
-
-.vedic-label--gandanta {
-    color: #1a0505;
-}
-
-.vedic-sep {
-    color: #999;
-    font-weight: 400;
-}
-
-.coord-preview {
-    margin: 0 0 12px 0;
-    padding: 10px 12px;
-    background: #f0f4f8;
-    border-radius: 6px;
-    font-size: 0.9em;
-    color: #34495e;
-    direction: ltr;
-    unicode-bidi: isolate;
-    text-align: left;
-}
-
-.coord-preview:empty {
-    display: none;
+/* ===================== Print ===================== */
+@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  body { background: #fff !important; color: #000; }
+  .stars, .navbar, .footer, .btn, button, .btn-group, .action-buttons,
+  .page-top-toolbar, .interp-guide-link, .btn-print-top { display: none !important; }
+  .container, .result-container, .shell { margin: 0; padding: 0; max-width: 100%; }
+  .card, .sheet { box-shadow: none; border: none; background: #fff; color: #000; padding: 0; }
+  .ai-panel { border: 1px solid #ccc; }
+  .ai-panel__head { background: #eee !important; color: #000; }
+  .ai-analysis, .ai-analysis h3 { color: #000; }
+  .result-box { max-height: none; overflow: visible; border: none; box-shadow: none; }
+  .astro-table { font-size: 0.7em; }
+  tr { page-break-inside: avoid; }
 }

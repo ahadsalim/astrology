@@ -8,7 +8,7 @@ from core.interpretation_guide import (
     render_interpretation_guide_html,
     render_interpretation_guide_for_prompt,
 )
-from services import AIService
+from services import AIService, AIConfigError, format_analysis_html
 from prompts import ASTRO_PROMPT, TRANSIT_PROMPT
 from data import get_all_cities
 from database import save_birth_chart, get_birth_chart, get_all_birth_charts
@@ -22,16 +22,23 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
+app.config.from_object(Config)
 
-try:
-    Config.validate()
-    app.config.from_object(Config)
-except ValueError as e:
-    logger.error(f"Configuration error: {e}")
-    raise
+# AI features require an API key, but the core Swiss Ephemeris flow does not.
+# So we never abort startup — we only report whether AI is ready.
+if Config.is_ai_configured():
+    logger.info(f"AI enabled (base_url={Config.API_URL}, model={Config.ASTRO_MODEL})")
+else:
+    logger.warning("AI disabled: no API_KEY set. Core astrology features remain available.")
 
 # Initialize services
 ai_service = AIService()
+
+
+@app.context_processor
+def inject_globals():
+    """Expose AI availability to all templates."""
+    return {"ai_enabled": AIService.is_configured()}
 
 
 @app.template_filter('dms_lat')
@@ -286,6 +293,66 @@ def view_transit_prompt():
     except Exception as e:
         logger.error(f"View transit prompt failed: {e}")
         return f"خطا در نمایش پرامپت ترانزیت: {str(e)}", 500
+
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    """Send birth-chart data to the AI and return the rendered analysis (JSON)."""
+    astro_data = request.form.get("astro_data", "").strip()
+    vision = request.form.get("vision", "").strip()
+
+    if not astro_data:
+        return jsonify({"success": False, "error": "داده‌ای برای تحلیل ارسال نشد."}), 400
+
+    if not AIService.is_configured():
+        return jsonify({
+            "success": False,
+            "code": "no_api_key",
+            "error": "کلید هوش مصنوعی تنظیم نشده است. یک کلید رایگان از Agnes بگیرید و در API_KEY قرار دهید.",
+        })
+
+    try:
+        analysis = ai_service.analyze_birth_chart(astro_data, vision)
+        return jsonify({
+            "success": True,
+            "analysis_html": format_analysis_html(analysis),
+            "analysis_text": analysis,
+        })
+    except AIConfigError as e:
+        return jsonify({"success": False, "code": "no_api_key", "error": str(e)})
+    except Exception as e:
+        logger.error(f"AI analysis failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/analyze-transit", methods=["POST"])
+def analyze_transit():
+    """Send transit data to the AI and return the rendered analysis (JSON)."""
+    transit_data = request.form.get("transit_data", "").strip()
+    vision = request.form.get("vision", "").strip()
+
+    if not transit_data:
+        return jsonify({"success": False, "error": "داده‌ای برای تحلیل ارسال نشد."}), 400
+
+    if not AIService.is_configured():
+        return jsonify({
+            "success": False,
+            "code": "no_api_key",
+            "error": "کلید هوش مصنوعی تنظیم نشده است. یک کلید رایگان از Agnes بگیرید و در API_KEY قرار دهید.",
+        })
+
+    try:
+        analysis = ai_service.analyze_transit(transit_data, vision)
+        return jsonify({
+            "success": True,
+            "analysis_html": format_analysis_html(analysis),
+            "analysis_text": analysis,
+        })
+    except AIConfigError as e:
+        return jsonify({"success": False, "code": "no_api_key", "error": str(e)})
+    except Exception as e:
+        logger.error(f"AI transit analysis failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 
 @app.route("/save", methods=["POST"])

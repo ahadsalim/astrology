@@ -1,102 +1,34 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحلیل زایچه - نجوم</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="result-container">
-        <div class="header">
-            <h1>🌟 تحلیل زایچه تولد</h1>
-            <p class="subtitle">تحلیل جامع نجومی بر اساس نجوم احکامی ایرانی-اسلامی</p>
-        </div>
+{% extends "base.html" %}
+{% block title %}تحلیل زایچه — نجوم اطلس{% endblock %}
 
-        <div class="result-box">
-            {{ result | safe }}
-        </div>
-
-        <div class="action-buttons">
-            <button onclick="saveChart()" class="btn-primary" id="saveBtn">
-                💾 ذخیره زایچه
-            </button>
-
-            <form action="/simplify" method="post" style="display: inline-block;">
-                <textarea name="text" style="display:none">{{ result }}</textarea>
-                <button type="submit" class="btn-secondary">
-                    📝 نسخه ساده
-                </button>
-            </form>
-
-            <button onclick="window.print()" class="btn-secondary">
-                🖨️ پرینت
-            </button>
-
-            <button onclick="copyToClipboard()" class="btn-secondary">
-                📋 کپی متن
-            </button>
-
-            <button onclick="window.location.href='/'" class="btn-secondary">
-                🏠 تحلیل جدید
-            </button>
-
-            <button onclick="window.location.href='/charts'" class="btn-secondary">
-                📚 زایچه‌های ذخیره شده
-            </button>
-        </div>
+{% block content %}
+<div class="shell">
+    <div class="hero">
+        <div class="hero__logo">🌟</div>
+        <h1>تحلیل زایچه تولد</h1>
+        <p class="subtitle">تحلیل جامع نجومی بر اساس نجوم احکامی ایرانی-اسلامی</p>
     </div>
 
-    <script>
-        function copyToClipboard() {
-            const resultBox = document.querySelector('.result-box');
-            const text = resultBox.innerText;
-            
-            navigator.clipboard.writeText(text).then(() => {
-                alert('✅ متن با موفقیت کپی شد');
-            }).catch(err => {
-                console.error('خطا در کپی کردن:', err);
-                alert('❌ خطا در کپی کردن متن');
-            });
-        }
+    <div class="result-box mt-2">
+        {{ result | safe }}
+    </div>
 
-        function saveChart() {
-            const saveBtn = document.getElementById('saveBtn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = '⏳ در حال ذخیره...';
+    <div class="action-buttons">
+        <button onclick="window.print()" class="btn btn-secondary" style="width:auto">🖨️ چاپ</button>
+        <button onclick="copyToClipboard()" class="btn btn-secondary" style="width:auto">📋 کپی متن</button>
+        <a href="/" class="btn btn-primary" style="width:auto">🏠 تحلیل جدید</a>
+        <a href="/charts" class="btn btn-secondary" style="width:auto">📚 زایچه‌های ذخیره شده</a>
+    </div>
+</div>
+{% endblock %}
 
-            const formData = new FormData();
-            formData.append('name', {{ name | tojson | safe }});
-            formData.append('date', {{ date | tojson | safe }});
-            formData.append('time', {{ time | tojson | safe }});
-            formData.append('place', {{ place | tojson | safe }});
-            formData.append('vision', {{ vision | tojson | safe }});
-            formData.append('astro_data', {{ astro_data | tojson | safe }});
-            formData.append('ai_analysis', document.querySelector('.result-box').innerHTML);
-            formData.append('birth_data', {{ birth_data_json | tojson | safe }});
-
-            fetch('/save', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ ' + data.message + ' (شناسه: ' + data.chart_id + ')');
-                    saveBtn.textContent = '✅ ذخیره شد';
-                } else {
-                    alert('❌ ' + data.message);
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = '💾 ذخیره زایچه';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ خطا در ذخیره‌سازی');
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 ذخیره زایچه';
-            });
-        }
-    </script>
-</body>
-</html>
+{% block scripts %}
+<script>
+    function copyToClipboard() {
+        const box = document.querySelector('.result-box');
+        navigator.clipboard.writeText(box.innerText)
+            .then(() => alert('✅ متن با موفقیت کپی شد'))
+            .catch(() => alert('❌ خطا در کپی کردن متن'));
+    }
+</script>
+{% endblock %}

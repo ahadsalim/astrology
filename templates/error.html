@@ -1,22 +1,16 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خطا - سامانه تحلیل نجومی</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container error-container">
-        <div class="error-icon">⚠️</div>
-        <h1>خطا</h1>
-        <div class="error-message">
-            <p>{{ error }}</p>
-        </div>
-        <div class="buttons">
-            <button onclick="window.history.back()">بازگشت</button>
-            <button onclick="window.location.href='/'">صفحه اصلی</button>
+{% extends "base.html" %}
+{% block title %}خطا — نجوم اطلس{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card text-center mt-3">
+        <div style="font-size:64px; margin-bottom:12px;">⚠️</div>
+        <h1 style="color:#fff">خطا</h1>
+        <div class="ai-error mt-2" style="text-align:center">{{ error }}</div>
+        <div class="action-buttons">
+            <button onclick="window.history.back()" class="btn btn-secondary" style="width:auto">↩️ بازگشت</button>
+            <a href="/" class="btn btn-primary" style="width:auto">🏠 صفحه اصلی</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

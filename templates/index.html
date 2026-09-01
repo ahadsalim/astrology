@@ -1,21 +1,18 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سامانه تحلیل نجومی - نجوم</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🌙✨</div>
-            <h1>سامانه تحلیل زایچه تولد</h1>
-            <p class="subtitle">تحلیل دقیق و جامع نجومی بر اساس نجوم احکامی ایرانی-اسلامی</p>
-        </div>
+{% extends "base.html" %}
+{% set nav = 'home' %}
+{% block title %}نجوم اطلس — تحلیل زایچه تولد{% endblock %}
 
+{% block content %}
+<div class="container">
+    <div class="hero">
+        <div class="hero__logo">🌙</div>
+        <h1>سامانه تحلیل زایچه تولد</h1>
+        <p class="subtitle">تحلیل دقیق و جامع نجومی بر پایهٔ نجوم احکامی ایرانی-اسلامی و هوش مصنوعی</p>
+    </div>
+
+    <div class="card mt-2">
         <div class="info-box">
-            <strong>ℹ️ راهنما:</strong>
+            <strong>ℹ️ راهنما</strong>
             <ul>
                 <li>تاریخ <strong>شمسی</strong> را از لیست انتخاب کنید</li>
                 <li>ساعت را به <strong>وقت محلی ایران</strong> وارد کنید (مثال: 14:30)</li>
@@ -25,7 +22,7 @@
 
         <form action="/calculate" method="post" id="birthForm" class="birth-form" onsubmit="return handleSubmit(event)">
             <input type="hidden" name="swiss_ephemeris" value="yes">
-            <input type="hidden" name="date" id="date" required>
+            <input type="hidden" name="date" id="date">
 
             <div class="form-row">
                 <label for="name">👤 نام</label>
@@ -48,7 +45,7 @@
             <div class="form-row">
                 <label for="time">🕐 ساعت تولد</label>
                 <div class="field-wrap">
-                    <input type="text" name="time" id="time" placeholder="14:30" required pattern="\d{1,2}:\d{2}">
+                    <input type="text" name="time" id="time" placeholder="14:30" value="12:00" required pattern="\d{1,2}:\d{2}">
                 </div>
             </div>
 
@@ -56,7 +53,6 @@
                 <label for="place">📍 محل تولد</label>
                 <div class="field-wrap">
                     <select name="place" id="place" required>
-                        <option value="" disabled selected>انتخاب شهر</option>
                         {% for city in cities %}
                         <option value="{{ city }}" {% if city == 'تهران' %}selected{% endif %}>{{ city }}</option>
                         {% endfor %}
@@ -84,119 +80,95 @@
             </div>
 
             <div class="form-actions-dual">
-                <button type="submit" formaction="/calculate" class="btn-primary btn-primary--compact" id="submitChartBtn">
+                <button type="submit" formaction="/calculate" class="btn btn-primary btn-primary--compact" id="submitChartBtn">
                     <span class="btn-text">🔮 محاسبه زایچه</span>
-                    <span class="btn-loading" style="display:none">⏳ در حال محاسبه...</span>
+                    <span class="btn-loading hidden"><span class="spinner"></span> در حال محاسبه…</span>
                 </button>
-                <button type="submit" formaction="/calculate-transit" class="btn-transit" id="submitTransitBtn">
+                <button type="submit" formaction="/calculate-transit" class="btn btn-transit" id="submitTransitBtn">
                     <span class="btn-text">🌍 ترانزیت لحظه</span>
-                    <span class="btn-loading" style="display:none">⏳ در حال محاسبه...</span>
+                    <span class="btn-loading hidden"><span class="spinner"></span> در حال محاسبه…</span>
                 </button>
             </div>
         </form>
-
-        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-            <a href="/cities-admin" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                🏙️ مدیریت شهرها و مختصات جغرافیایی
-            </a>
-        </div>
     </div>
 
-    <script>
-        const JALALI_MONTHS = [
-            'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-            'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
-        ];
+    <p class="text-center mt-2">
+        <span class="chip">✨ تحلیل هوشمند با {{ 'Agnes AI فعال' if ai_enabled else 'Agnes AI (کلید API لازم است)' }}</span>
+    </p>
+</div>
+{% endblock %}
 
-        function isJalaliLeap(year) {
-            const a = year - (year >= 0 ? 474 : 473);
-            const b = (a % 2820) + 474;
-            return (((b + 38) * 682) % 2816) < 682;
+{% block scripts %}
+<script>
+    const JALALI_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
+    function isJalaliLeap(year) {
+        const a = year - (year >= 0 ? 474 : 473);
+        const b = (a % 2820) + 474;
+        return (((b + 38) * 682) % 2816) < 682;
+    }
+    function jalaliMonthLength(year, month) {
+        if (month <= 6) return 31;
+        if (month <= 11) return 30;
+        return isJalaliLeap(year) ? 30 : 29;
+    }
+    function fillYears() {
+        const y = document.getElementById('date-year');
+        for (let year = 1450; year >= 1300; year--) {
+            const opt = document.createElement('option');
+            opt.value = String(year); opt.textContent = String(year);
+            y.appendChild(opt);
         }
-
-        function jalaliMonthLength(year, month) {
-            if (month <= 6) return 31;
-            if (month <= 11) return 30;
-            return isJalaliLeap(year) ? 30 : 29;
+        y.value = '1370';
+    }
+    function fillMonths() {
+        const m = document.getElementById('date-month');
+        JALALI_MONTHS.forEach((name, idx) => {
+            const opt = document.createElement('option');
+            opt.value = String(idx + 1); opt.textContent = `${idx + 1} — ${name}`;
+            m.appendChild(opt);
+        });
+        m.value = '1';
+    }
+    function fillDays() {
+        const year = parseInt(document.getElementById('date-year').value, 10);
+        const month = parseInt(document.getElementById('date-month').value, 10);
+        const daySelect = document.getElementById('date-day');
+        const prevDay = parseInt(daySelect.value, 10) || 1;
+        const maxDay = jalaliMonthLength(year, month);
+        daySelect.innerHTML = '';
+        for (let d = 1; d <= maxDay; d++) {
+            const opt = document.createElement('option');
+            opt.value = String(d); opt.textContent = String(d);
+            daySelect.appendChild(opt);
         }
-
-        function fillYears() {
-            const yearSelect = document.getElementById('date-year');
-            for (let y = 1450; y >= 1300; y--) {
-                const opt = document.createElement('option');
-                opt.value = String(y);
-                opt.textContent = String(y);
-                yearSelect.appendChild(opt);
-            }
-            yearSelect.value = '1370';
-        }
-
-        function fillMonths() {
-            const monthSelect = document.getElementById('date-month');
-            JALALI_MONTHS.forEach((name, idx) => {
-                const opt = document.createElement('option');
-                const month = idx + 1;
-                opt.value = String(month);
-                opt.textContent = `${month} — ${name}`;
-                monthSelect.appendChild(opt);
-            });
-            monthSelect.value = '1';
-        }
-
-        function fillDays() {
-            const year = parseInt(document.getElementById('date-year').value, 10);
-            const month = parseInt(document.getElementById('date-month').value, 10);
-            const daySelect = document.getElementById('date-day');
-            const prevDay = parseInt(daySelect.value, 10) || 1;
-            const maxDay = jalaliMonthLength(year, month);
-
-            daySelect.innerHTML = '';
-            for (let d = 1; d <= maxDay; d++) {
-                const opt = document.createElement('option');
-                opt.value = String(d);
-                opt.textContent = String(d);
-                daySelect.appendChild(opt);
-            }
-            daySelect.value = String(Math.min(prevDay, maxDay));
-            syncHiddenDate();
-        }
-
-        function syncHiddenDate() {
-            const year = document.getElementById('date-year').value;
-            const month = document.getElementById('date-month').value.padStart(2, '0');
-            const day = document.getElementById('date-day').value.padStart(2, '0');
-            document.getElementById('date').value = `${year}-${month}-${day}`;
-        }
-
-        function initDatePicker() {
-            fillYears();
-            fillMonths();
-            fillDays();
-
-            document.getElementById('date-year').addEventListener('change', fillDays);
-            document.getElementById('date-month').addEventListener('change', fillDays);
-            document.getElementById('date-day').addEventListener('change', syncHiddenDate);
-
-            syncHiddenDate();
-        }
-
-        function handleSubmit(event) {
-            syncHiddenDate();
-            const btn = event.submitter || document.getElementById('submitChartBtn');
-            const form = event.target;
-            form.querySelectorAll('button[type="submit"]').forEach(function(b) {
-                b.disabled = true;
-                const t = b.querySelector('.btn-text');
-                const l = b.querySelector('.btn-loading');
-                if (b === btn && t && l) {
-                    t.style.display = 'none';
-                    l.style.display = 'inline';
-                }
-            });
-            return true;
-        }
-
-        initDatePicker();
-    </script>
-</body>
-</html>
+        daySelect.value = String(Math.min(prevDay, maxDay));
+        syncHiddenDate();
+    }
+    function syncHiddenDate() {
+        const year = document.getElementById('date-year').value;
+        const month = document.getElementById('date-month').value.padStart(2, '0');
+        const day = document.getElementById('date-day').value.padStart(2, '0');
+        document.getElementById('date').value = `${year}-${month}-${day}`;
+    }
+    function initDatePicker() {
+        fillYears(); fillMonths(); fillDays();
+        document.getElementById('date-year').addEventListener('change', fillDays);
+        document.getElementById('date-month').addEventListener('change', fillDays);
+        document.getElementById('date-day').addEventListener('change', syncHiddenDate);
+        syncHiddenDate();
+    }
+    function handleSubmit(event) {
+        syncHiddenDate();
+        const btn = event.submitter || document.getElementById('submitChartBtn');
+        event.target.querySelectorAll('button[type="submit"]').forEach(function(b) {
+            b.disabled = true;
+            const t = b.querySelector('.btn-text');
+            const l = b.querySelector('.btn-loading');
+            if (b === btn && t && l) { t.classList.add('hidden'); l.classList.remove('hidden'); }
+        });
+        return true;
+    }
+    initDatePicker();
+</script>
+{% endblock %}
