@@ -6,17 +6,10 @@ Handles Jalali to Gregorian conversion and timezone management
 
 import jdatetime
 from datetime import datetime
-import pytz
 import logging
 from .iran_dst_history import iran_offset_for_jalali
 
 logger = logging.getLogger(__name__)
-
-# Kept so existing callers can still pass the Tehran zone object.
-# The offset itself is NOT taken from this zone. IANA Asia/Tehran disagrees
-# with the Solar Hijri rules required for Iranian birth charts; the offset
-# comes only from iran_offset_for_jalali.
-IRAN_TZ = pytz.timezone('Asia/Tehran')
 
 
 class DateTimeConverter:
@@ -61,15 +54,14 @@ class DateTimeConverter:
             raise ValueError(f"تاریخ نامعتبر است: {jalali_date_str}")
     
     @staticmethod
-    def local_to_utc(gregorian_date, local_time_str, timezone=IRAN_TZ):
+    def local_to_utc(gregorian_date, local_time_str, timezone=None):
         """
         Convert an Iranian local civil time to UTC.
 
         The Gregorian date is turned back into the Solar Hijri date with the
         same ``jdatetime`` conversion the rest of the app uses, then the
         offset is taken from ``iran_offset_for_jalali``. ``timezone`` is
-        accepted for compatibility and is not consulted: every seeded city
-        is Asia/Tehran, and that IANA zone is not the chart rule.
+        accepted for compatibility and is not consulted.
 
         Args:
             gregorian_date: datetime.date (or datetime) object
@@ -162,14 +154,14 @@ class DateTimeConverter:
         return jd
     
     @staticmethod
-    def parse_and_convert(jalali_date_str, local_time_str, timezone=IRAN_TZ):
+    def parse_and_convert(jalali_date_str, local_time_str, timezone=None):
         """
         Complete conversion from Jalali date and local time to Julian Day
         
         Args:
             jalali_date_str: Jalali date string
             local_time_str: Local time string
-            timezone: Timezone object
+            timezone: ignored; retained so existing callers keep working
             
         Returns:
             dict with all conversion data including Julian Day

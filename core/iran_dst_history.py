@@ -2,77 +2,86 @@
 """
 Iran civil offset for natal charts.
 
-This is the only place that decides the UTC offset of an Iranian local
-birth time. ``date_utils`` subtracts whatever this module returns; it does
-not keep a second copy of the rules.
+``iran_offset_for_jalali`` is the only place that decides the UTC offset of
+an Iranian local birth time. ``date_utils`` subtracts whatever it returns.
 
-The rules are the Solar Hijri table supplied for this project (Tehran).
-They are not the IANA ``Asia/Tehran`` zone. Where that zone disagrees, this
-table wins. See ``TZDATA_DISAGREEMENTS``.
+The table follows contemporary reports and cabinet decrees (Ettela'at,
+Kayhan, Aftab-e Sharq), which current IANA tz main also follows, except
+where this file documents an owner decision or an uncertain reading.
+It does not follow the earlier image table, and it does not call pytz.
 
-Offset table
-------------
-+03:30  Before 10 Aban 1356, and the standard offset from 10 Dey 1357 onward.
-+04:00  From 10 Aban 1356 through 9 Dey 1357, outside the 1357 daylight window.
-+05:00  1 Farvardin 1357 00:00 through 30 Shahrivar 1357 24:00
-        (+04:00 base plus one hour of daylight time).
-+04:30  First-half daylight time in 1358, 1359, 1371–1384, and 1387–1401.
-+03:30  No daylight time in 1360–1370, 1385, 1386, or from 1402 onward.
+Offset table (Solar Hijri, Tehran clock)
+-----------------------------------------
++03:30  Standard offset. Also used before 22 Khordad 1314. tz main uses
+        local/Tehran mean time +03:25:44 until that morning; that is
+        documented and not applied.
++04:30  Daylight time: 1 Farvardin 1356 00:00 through 28 Mehr 1356 24:00;
+        5 Khordad 1358 00:00 through 30 Shahrivar 1358 24:00;
+        1 Farvardin 1359 00:00 through 31 Shahrivar 1359 24:00;
+        13 Ordibehesht 1370 00:00 through 30 Shahrivar 1370 24:00;
+        1 Farvardin 00:00 through 30 Shahrivar 24:00 in 1371–1384 and
+        1387–1401.
++04:00  From 29 Mehr 1356 through 3 Farvardin 1357, and from 14 Mordad
+        1357 01:00 through 19 Aban 1357 24:00. A standard-offset change,
+        not an extra hour of daylight time.
++05:00  4 Farvardin 1357 00:00 through 14 Mordad 1357 01:00
+        (+04:00 base plus one hour).
++03:30  No daylight time in 1360–1369, 1385, 1386, or from 1402 on.
 
-"First half" means 1 Farvardin 00:00 through 30 Shahrivar 24:00.
-At the start, clocks jump from 00:00 to 01:00.
-At the end (24:00 on 30 Shahrivar, which is 00:00 on 1 Mehr), clocks jump
-back to 23:00 on 30 Shahrivar.
+Where the clock moves
+----------------------
+Forward one hour, so the named hour never happens. A time inside the gap
+uses the post-transition offset.
 
-The two half-hour shifts do not name a clock time. Both are applied at
-local midnight at the start of the named day:
+- 1356, 1359, 1371–1384, 1387–1401: 00:00 at the start of 1 Farvardin
+  (the night entering 1 Farvardin). Gap = 1 Farvardin 00:00–00:59.
+  Owner decision. The cabinet decree says the clocks move at "24:00 of
+  1 Farvardin", and current tz main reads that as the end of 1 Farvardin
+  (gap on 2 Farvardin) for 1371–1401. 1356 in tz main is instead 23:00 on
+  1 Farvardin. 1359 in tz main (20 March 1980 24:00) is the same instant
+  as this 00:00 start.
+- 1357: 00:00 at the start of 4 Farvardin, the first Friday of Farvardin.
+  Gap = 4 Farvardin 00:00–00:59. Kayhan describes 24:00 at the end of that
+  day (tz main's reading, gap on 5 Farvardin). That reading is uncertain.
+- 1358: 00:00 at the start of 5 Khordad (24:00 at the end of 4 Khordad).
+  Gap = 5 Khordad 00:00–00:59.
+- 1370: 00:00 at the start of 13 Ordibehesht. Gap = 13 Ordibehesht
+  00:00–00:59. This matches tz main and timeanddate; the contemporary
+  notice for the start is thin, so the instant is uncertain.
 
-- 10 Aban 1356 00:00: clocks forward 30 minutes (+03:30 → +04:00).
-- 10 Dey 1357 00:00: clocks back 30 minutes (+04:00 → +03:30).
+Back, so the named minutes happen twice. The earlier occurrence is used.
 
-Ambiguous and nonexistent local times
---------------------------------------
-Spring-forward gaps (that clock reading never happened):
+- 28 Mehr 1356 24:00: +04:30 to +04:00. 23:30–23:59 repeats.
+- 14 Mordad 1357 01:00: +05:00 to +04:00. 00:00–00:59 repeats.
+- 19 Aban 1357 24:00: +04:00 to +03:30. 23:30–23:59 repeats.
+- 30 Shahrivar 24:00 in 1358, 1370, 1371–1384 and 1387–1401: +04:30 to
+  +03:30. 23:00–23:59 repeats. Shahrivar has 31 days, so 31 Shahrivar is
+  already standard time. For 1358, tz main ends instead at 24:00 on
+  27 Shahrivar; that alternative is uncertain. The cabinet decree used
+  here names 30 Shahrivar.
+- 31 Shahrivar 1359 24:00: +04:30 to +03:30. 23:00–23:59 repeats.
 
-- 10 Aban 1356, 00:00–00:29
-- 1 Farvardin of a daylight-time year, 00:00–00:59
-
-Resolution: the post-transition offset. The written time is converted as
-if the clock had already been moved.
-
-Fall-back overlaps (the same reading happens twice):
-
-- 30 Shahrivar of a daylight-time year, 23:00–23:59
-- 9 Dey 1357, 23:30–23:59
-
-Resolution: the earlier occurrence, which is the offset still in effect
-before the setback. Daylight time therefore stays in force through the
-first pass of 23:00–24:00 on 30 Shahrivar.
+There is no 10 Aban 1356 shift and no 10 Dey 1357 shift.
 """
 
 from datetime import timedelta
 
 import jdatetime
 
-# Standard and historical base offsets.
 OFFSET_0330 = timedelta(hours=3, minutes=30)
 OFFSET_0400 = timedelta(hours=4)
 OFFSET_0430 = timedelta(hours=4, minutes=30)
 OFFSET_0500 = timedelta(hours=5)
 
-# Solar Hijri years whose first half observes +1 hour of daylight time
-# on top of the standard offset then in force (1357's standard offset is
-# +04:00, so that year is +05:00; every later year in this set is +04:30).
-def _daylight_year(jalali_year):
-    if jalali_year == 1357:
-        return True
-    if jalali_year in (1358, 1359):
-        return True
-    if 1371 <= jalali_year <= 1384:
-        return True
-    if 1387 <= jalali_year <= 1401:
-        return True
-    return False
+# Daylight time that begins on 1 Farvardin and ends at 24:00 on 30 Shahrivar.
+MODERN_DST_YEARS = tuple(range(1371, 1385)) + tuple(range(1387, 1402))
+
+_OWNER_FARVARDIN = (
+    "Owner decision: the forward change is at 00:00 at the start of "
+    "1 Farvardin (the night entering 1 Farvardin), so 00:00–00:59 is the gap. "
+    "The decree text says 24:00 of 1 Farvardin, which tz main reads as the "
+    "end of that day (gap on 2 Farvardin) for 1371–1401."
+)
 
 
 def _offset_str(offset):
@@ -83,232 +92,218 @@ def _offset_str(offset):
     return f"{sign}{hours:02d}:{minutes:02d}"
 
 
-def _result(offset, dst_applied, status, resolution, rule):
+def _pack(offset, status, resolution, rule):
     return {
         "offset": offset,
         "offset_str": _offset_str(offset),
         "offset_minutes": int(offset.total_seconds() // 60),
-        "dst_applied": dst_applied,
+        "dst_applied": offset in (OFFSET_0430, OFFSET_0500),
         "local_time_status": status,
         "resolution": resolution,
         "rule": rule,
     }
 
 
+def _gap(year, month, day, before, after, rule, after_rule):
+    return {
+        "start": (year, month, day, 0, 0),
+        "end": (year, month, day, 0, 59),
+        "kind": "gap",
+        "before": before,
+        "after": after,
+        "rule": rule,
+        "after_rule": after_rule,
+        "resolution": (
+            f"{year:04d}-{month:02d}-{day:02d} 00:00 clocks advanced 1 hour; "
+            f"a time inside the gap uses the post-transition offset {_offset_str(after)}"
+        ),
+    }
+
+
+def _overlap(year, month, day, hour, minute, before, after, rule, after_rule, when):
+    return {
+        "start": (year, month, day, hour, minute),
+        "end": (year, month, day, hour, 59),
+        "kind": "overlap",
+        "before": before,
+        "after": after,
+        "rule": rule,
+        "after_rule": after_rule,
+        "resolution": (
+            f"{when}; the repeated clock time uses the earlier occurrence "
+            f"({_offset_str(before)})"
+        ),
+    }
+
+
+def _build_transitions():
+    rows = []
+
+    rows.append(_gap(
+        1356, 1, 1, OFFSET_0330, OFFSET_0430,
+        "1356: +03:30 to +04:30 at 00:00 on 1 Farvardin. " + _OWNER_FARVARDIN
+        + " tz main instead moves the clock at 23:00 on 1 Farvardin.",
+        "1356 daylight time +04:30 until 24:00 on 28 Mehr",
+    ))
+    rows.append(_overlap(
+        1356, 7, 28, 23, 30, OFFSET_0430, OFFSET_0400,
+        "28 Mehr 1356 24:00: +04:30 back to +04:00",
+        "+04:00 from 29 Mehr 1356 until 00:00 on 4 Farvardin 1357",
+        "28 Mehr 1356 24:00 clocks went back 30 minutes",
+    ))
+
+    rows.append(_gap(
+        1357, 1, 4, OFFSET_0400, OFFSET_0500,
+        "1357: +04:00 to +05:00 at 00:00 on 4 Farvardin, the first Friday "
+        "of Farvardin. Uncertain: Kayhan and tz main put the same change at "
+        "24:00 at the end of 4 Farvardin (gap on 5 Farvardin).",
+        "1357 daylight time +05:00 until 01:00 on 14 Mordad",
+    ))
+    rows.append(_overlap(
+        1357, 5, 14, 0, 0, OFFSET_0500, OFFSET_0400,
+        "14 Mordad 1357 01:00: +05:00 back to +04:00",
+        "+04:00 from 14 Mordad 1357 01:00 until 24:00 on 19 Aban",
+        "14 Mordad 1357 01:00 clocks went back 1 hour",
+    ))
+    rows.append(_overlap(
+        1357, 8, 19, 23, 30, OFFSET_0400, OFFSET_0330,
+        "19 Aban 1357 24:00: +04:00 back to +03:30",
+        "standard offset +03:30 from 20 Aban 1357",
+        "19 Aban 1357 24:00 clocks went back 30 minutes",
+    ))
+
+    rows.append(_gap(
+        1358, 3, 5, OFFSET_0330, OFFSET_0430,
+        "1358: +03:30 to +04:30 at 00:00 on 5 Khordad (24:00 at the end of 4 Khordad)",
+        "1358 daylight time +04:30 until 24:00 on 30 Shahrivar. "
+        "Uncertain alternative in tz main: 24:00 on 27 Shahrivar.",
+    ))
+    rows.append(_overlap(
+        1358, 6, 30, 23, 0, OFFSET_0430, OFFSET_0330,
+        "30 Shahrivar 1358 24:00: daylight time ends. "
+        "Uncertain alternative in tz main: 24:00 on 27 Shahrivar.",
+        "standard offset +03:30 after 30 Shahrivar 1358",
+        "30 Shahrivar 1358 24:00 clocks went back 1 hour",
+    ))
+
+    rows.append(_gap(
+        1359, 1, 1, OFFSET_0330, OFFSET_0430,
+        "1359: +03:30 to +04:30 at 00:00 on 1 Farvardin. " + _OWNER_FARVARDIN
+        + " For 1359 this is the same instant tz main uses.",
+        "1359 daylight time +04:30 until 24:00 on 31 Shahrivar",
+    ))
+    rows.append(_overlap(
+        1359, 6, 31, 23, 0, OFFSET_0430, OFFSET_0330,
+        "31 Shahrivar 1359 24:00: daylight time ends",
+        "1360–1369: no daylight time, standard offset +03:30",
+        "31 Shahrivar 1359 24:00 clocks went back 1 hour",
+    ))
+
+    rows.append(_gap(
+        1370, 2, 13, OFFSET_0330, OFFSET_0430,
+        "1370: +03:30 to +04:30 at 00:00 on 13 Ordibehesht. "
+        "Matches tz main and timeanddate; the contemporary notice for this "
+        "start is thin, so the instant is uncertain.",
+        "1370 daylight time +04:30 until 24:00 on 30 Shahrivar",
+    ))
+    rows.append(_overlap(
+        1370, 6, 30, 23, 0, OFFSET_0430, OFFSET_0330,
+        "30 Shahrivar 1370 24:00: daylight time ends",
+        "standard offset +03:30 after 30 Shahrivar 1370",
+        "30 Shahrivar 1370 24:00 clocks went back 1 hour",
+    ))
+
+    for year in MODERN_DST_YEARS:
+        rows.append(_gap(
+            year, 1, 1, OFFSET_0330, OFFSET_0430,
+            f"{year}: +03:30 to +04:30 at 00:00 on 1 Farvardin. " + _OWNER_FARVARDIN,
+            f"{year}: first-half daylight time +04:30 until 24:00 on 30 Shahrivar",
+        ))
+        rows.append(_overlap(
+            year, 6, 30, 23, 0, OFFSET_0430, OFFSET_0330,
+            f"30 Shahrivar {year} 24:00: daylight time ends. "
+            "Shahrivar has 31 days; 31 Shahrivar is standard time.",
+            f"standard offset +03:30 after 30 Shahrivar {year}",
+            f"30 Shahrivar {year} 24:00 clocks went back 1 hour",
+        ))
+
+    for earlier, later in zip(rows, rows[1:]):
+        if earlier["start"] >= later["start"] or earlier["end"] >= later["start"]:
+            raise RuntimeError(f"Iran offset transitions overlap: {earlier['start']} / {later['start']}")
+    return tuple(rows)
+
+
+TRANSITIONS = _build_transitions()
+
+
+def _baseline_rule(stamp):
+    if stamp < (1314, 3, 22, 0, 0):
+        return (
+            "standard offset +03:30. tz main uses local mean time +03:25:44 "
+            "before 22 Khordad 1314 (13 June 1935); that difference is not applied"
+        )
+    return "standard offset +03:30"
+
+
 def iran_offset_for_jalali(year, month, day, hour, minute):
     """
-    UTC offset for a Solar Hijri civil time in Iran.
+    UTC offset for one Solar Hijri civil time in Iran.
 
-    Args:
-        year, month, day: Solar Hijri date
-        hour, minute: local clock time, 00:00–23:59
+    Returns offset, offset_str, dst_applied, local_time_status
+    (``unique``, ``ambiguous``, or ``nonexistent``), resolution, and rule.
 
-    Returns:
-        dict with ``offset`` (timedelta), ``offset_str``, ``dst_applied``,
-        ``local_time_status`` (``unique``, ``ambiguous``, or ``nonexistent``),
-        ``resolution``, and ``rule``.
-
-    Raises:
-        ValueError: if the date or the clock time does not exist on the
-        Solar Hijri calendar. A clock time inside a DST gap is not an
-        error; it is returned with status ``nonexistent`` and the
-        post-transition offset.
+    A gap is not an error: it is returned as ``nonexistent`` with the
+    post-transition offset. A repeated hour is returned as ``ambiguous``
+    with the earlier offset.
     """
     if not isinstance(hour, int) or not isinstance(minute, int):
         raise ValueError("ساعت محلی باید عدد صحیح باشد")
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         raise ValueError(f"ساعت محلی نامعتبر است: {hour:02d}:{minute:02d}")
-
-    # Reject impossible civil dates (30 Esfand in a non-leap year, month 13, …).
     try:
         jdatetime.date(year, month, day)
     except ValueError as exc:
         raise ValueError(f"تاریخ شمسی نامعتبر است: {year}-{month:02d}-{day:02d}") from exc
 
     stamp = (year, month, day, hour, minute)
+    offset = OFFSET_0330
+    rule = _baseline_rule(stamp)
 
-    # 10 Aban 1356, 00:00–00:29 did not occur (+03:30 jumped to +04:00).
-    if (1356, 8, 10, 0, 0) <= stamp <= (1356, 8, 10, 0, 29):
-        return _result(
-            OFFSET_0400,
-            False,
-            "nonexistent",
-            "10 Aban 1356 00:00 clocks advanced 30 minutes; "
-            "a time inside the gap uses the post-transition offset +04:00",
-            "10 Aban 1356: base offset becomes +04:00",
-        )
+    for transition in TRANSITIONS:
+        if stamp < transition["start"]:
+            break
+        if stamp <= transition["end"]:
+            if transition["kind"] == "gap":
+                return _pack(transition["after"], "nonexistent", transition["resolution"], transition["rule"])
+            return _pack(transition["before"], "ambiguous", transition["resolution"], transition["rule"])
+        offset = transition["after"]
+        rule = transition["after_rule"]
 
-    # 1 Farvardin 1357, 00:00–00:59 did not occur (+04:00 jumped to +05:00).
-    if (1357, 1, 1, 0, 0) <= stamp <= (1357, 1, 1, 0, 59):
-        return _result(
-            OFFSET_0500,
-            True,
-            "nonexistent",
-            "1 Farvardin 1357 00:00 clocks advanced 1 hour; "
-            "a time inside the gap uses the post-transition offset +05:00",
-            "spring 1357: daylight +1 hour on the +04:00 base (+05:00)",
-        )
-
-    # 30 Shahrivar 1357, 23:00–23:59 happened twice. Keep the earlier, +05:00.
-    if (1357, 6, 31, 23, 0) <= stamp <= (1357, 6, 31, 23, 59):
-        return _result(
-            OFFSET_0500,
-            True,
-            "ambiguous",
-            "30 Shahrivar 1357 24:00 clocks went back 1 hour; "
-            "the repeated hour uses the earlier occurrence (+05:00)",
-            "autumn 1357: daylight ends, offset returns to +04:00",
-        )
-
-    # 9 Dey 1357, 23:30–23:59 happened twice. Keep the earlier, +04:00.
-    if (1357, 10, 9, 23, 30) <= stamp <= (1357, 10, 9, 23, 59):
-        return _result(
-            OFFSET_0400,
-            False,
-            "ambiguous",
-            "10 Dey 1357 00:00 clocks went back 30 minutes; "
-            "the repeated half-hour uses the earlier occurrence (+04:00)",
-            "10 Dey 1357: standard offset returns to +03:30",
-        )
-
-    if year != 1357 and _daylight_year(year):
-        if (year, 1, 1, 0, 0) <= stamp <= (year, 1, 1, 0, 59):
-            return _result(
-                OFFSET_0430,
-                True,
-                "nonexistent",
-                f"1 Farvardin {year} 00:00 clocks advanced 1 hour; "
-                "a time inside the gap uses the post-transition offset +04:30",
-                _daylight_rule(year),
-            )
-        if (year, 6, 31, 23, 0) <= stamp <= (year, 6, 31, 23, 59):
-            return _result(
-                OFFSET_0430,
-                True,
-                "ambiguous",
-                f"30 Shahrivar {year} 24:00 clocks went back 1 hour; "
-                "the repeated hour uses the earlier occurrence (+04:30)",
-                _daylight_rule(year),
-            )
-
-    # Before the 10 Aban 1356 advance. The gap minutes were returned above,
-    # so everything still below 00:30 that morning is the old offset.
-    if stamp < (1356, 8, 10, 0, 30):
-        return _result(
-            OFFSET_0330,
-            False,
-            "unique",
-            "unique local time",
-            "before 10 Aban 1356: standard offset +03:30",
-        )
-
-    # +04:00 base, before daylight time starts on 1 Farvardin 1357.
-    if stamp < (1357, 1, 1, 0, 0):
-        return _result(
-            OFFSET_0400,
-            False,
-            "unique",
-            "unique local time",
-            "10 Aban 1356: base offset becomes +04:00",
-        )
-
-    # 1357 daylight body: 01:00 on 1 Farvardin through 22:59 on 30 Shahrivar.
-    if stamp < (1357, 6, 31, 23, 0):
-        return _result(
-            OFFSET_0500,
-            True,
-            "unique",
-            "unique local time",
-            "spring 1357: daylight +1 hour on the +04:00 base (+05:00)",
-        )
-
-    # After the 1357 fall-back, until the half-hour overlap on 9 Dey.
-    if stamp < (1357, 10, 9, 23, 30):
-        return _result(
-            OFFSET_0400,
-            False,
-            "unique",
-            "unique local time",
-            "autumn 1357: daylight ends, offset returns to +04:00",
-        )
-
-    # From 10 Dey 1357 00:00 onward the standard offset is +03:30.
-    if _daylight_year(year) and (year, 1, 1, 1, 0) <= stamp < (year, 6, 31, 23, 0):
-        return _result(
-            OFFSET_0430,
-            True,
-            "unique",
-            "unique local time",
-            _daylight_rule(year),
-        )
-
-    return _result(
-        OFFSET_0330,
-        False,
-        "unique",
-        "unique local time",
-        _standard_rule(year),
-    )
-
-
-def _daylight_rule(jalali_year):
-    if jalali_year == 1357:
-        return "spring 1357: daylight +1 hour on the +04:00 base (+05:00)"
-    if jalali_year in (1358, 1359):
-        return f"{jalali_year}: first-half daylight time, offset +04:30"
-    if 1371 <= jalali_year <= 1384:
-        return f"{jalali_year}: first-half daylight time (1371–1384), offset +04:30"
-    if 1387 <= jalali_year <= 1401:
-        return f"{jalali_year}: first-half daylight time (1387–1401), offset +04:30"
-    return f"{jalali_year}: standard offset +03:30"
-
-
-def _standard_rule(jalali_year):
-    if 1360 <= jalali_year <= 1370:
-        return f"{jalali_year}: no daylight time (1360–1370), offset +03:30"
-    if jalali_year in (1385, 1386):
-        return f"{jalali_year}: no daylight time (1385–1386), offset +03:30"
-    if jalali_year >= 1402:
-        return f"{jalali_year}: no daylight time (from 1402), offset +03:30"
-    if jalali_year < 1356:
-        return "before 10 Aban 1356: standard offset +03:30"
-    return f"{jalali_year}: standard offset +03:30"
+    return _pack(offset, "unique", "unique local time", rule)
 
 
 def _gregorian_noon_offset(year, month, day):
-    """Offset at local noon, which is never inside an Iran transition fold."""
     jalali = jdatetime.date.fromgregorian(year=year, month=month, day=day)
     return iran_offset_for_jalali(jalali.year, jalali.month, jalali.day, 12, 0)
 
 
 def should_apply_dst(year, month, day):
-    """
-    Whether seasonal daylight time is in effect at local noon on a Gregorian date.
-
-    Noon is used so the 00:00 gap and the 23:00 overlap are not mistaken for
-    the whole civil day. The +04:00 base used from 10 Aban 1356 until 10 Dey
-    1357 is a standard-offset change, not daylight time, and returns False.
-    """
+    """Whether the seasonal extra hour is in effect at local noon on a Gregorian date."""
     return _gregorian_noon_offset(year, month, day)["dst_applied"]
 
 
 def is_dst_active_in_year(year):
     """
-    Whether the Solar Hijri year that contains 1 July of this Gregorian year
-    observes first-half daylight time.
-
-    1 July always falls in Tir, inside that year's first half.
+    Whether 1 July of this Gregorian year falls in a Solar Hijri year whose
+    summer carries the seasonal extra hour. 1 July is in Tir.
     """
     jalali = jdatetime.date.fromgregorian(year=year, month=7, day=1)
-    return _daylight_year(jalali.year)
+    info = iran_offset_for_jalali(jalali.year, jalali.month, jalali.day, 12, 0)
+    return info["dst_applied"]
 
 
 def get_dst_info(year):
-    """
-    Describe daylight time for the Solar Hijri year that contains 1 July
-    of the given Gregorian year. The reason text comes from the same offset
-    function used to convert birth times.
-    """
+    """Describe the offset at noon on 1 July, from ``iran_offset_for_jalali``."""
     info = _gregorian_noon_offset(year, 7, 1)
     jalali = jdatetime.date.fromgregorian(year=year, month=7, day=1)
     return {
@@ -320,84 +315,76 @@ def get_dst_info(year):
     }
 
 
-# Midday samples where pytz 2024.1's bundled Asia/Tehran (what
-# ``pytz.timezone("Asia/Tehran")`` returns in this project) and this table
-# disagree. The chart rule wins for every row. The OS zoneinfo file is not
-# consulted; on this machine it also differs from pytz on the 1978 return
-# to +03:30 (10 November in zoneinfo, 31 December in pytz).
-# Checked by tests/test_iran_offset.py.
+# Local noons where this table and current IANA tz main (Asia/Tehran) differ.
+# Every other noon in the tests matches that zone. pytz 2024.1 is older;
+# its two stale transitions are ``PYTZ_2024_1_OUTDATED``, not this list.
 TZDATA_DISAGREEMENTS = (
     {
         "jalali": (1300, 1, 1),
-        "note": "Until 13 June 1935, pytz Asia/Tehran is Local/Tehran Mean Time "
-        "+03:26. The chart rule is +03:30 for every local time before 10 Aban 1356.",
+        "offset": "+03:30",
+        "note": "Before 22 Khordad 1314 (13 June 1935) tz main is local mean "
+        "time +03:25:44. This table stays on +03:30 and does not model LMT.",
     },
     {
-        "jalali": (1356, 4, 15),
-        "note": "22 March 1977 through 20 October 1977, Asia/Tehran observes "
-        "daylight time at +04:30. Solar Hijri 1356 has no daylight time; "
-        "summer 1356 stays +03:30.",
+        "jalali": (1356, 1, 1),
+        "offset": "+04:30",
+        "note": "Owner decision: 1356 daylight time starts at 00:00 on "
+        "1 Farvardin. tz main's 1977 rule is 23:00 on 21 March, so noon on "
+        "1 Farvardin is still +03:30 there and +04:30 here. From 2 Farvardin "
+        "the two agree at +04:30.",
     },
     {
-        "jalali": (1356, 8, 9),
-        "note": "After the 20 October 1977 fall-back, Asia/Tehran is already "
-        "+04:00. The chart rule stays +03:30 until 10 Aban 1356 (1 November 1977). "
-        "Noon on 10 Aban itself agrees: both are +04:00.",
-    },
-    {
-        "jalali": (1357, 1, 3),
-        "note": "Asia/Tehran starts +05:00 on 25 March 1978 (5 Farvardin 1357). "
-        "The chart rule starts at 1 Farvardin 1357 00:00 (21 March 1978). "
-        "Midsummer 1357 (15 Tir) agrees at +05:00.",
-    },
-    {
-        "jalali": (1357, 5, 20),
-        "note": "Asia/Tehran ends +05:00 on 5 August 1978 (14 Mordad 1357). "
-        "The chart rule keeps +05:00 until 30 Shahrivar 1357 24:00 "
-        "(22 September 1978). 1 Mehr 1357 agrees again at +04:00.",
-    },
-    {
-        "jalali": (1357, 10, 10),
-        "note": "pytz moves +04:00 back to +03:30 at 24:00 on 31 December 1978, "
-        "so noon on 10 Dey 1357 is still +04:00 there. The chart rule treats "
-        "10 Dey as the first civil day of +03:30 (clocks back 30 minutes at "
-        "00:00). Azar 1357 agrees: both are still +04:00.",
-    },
-    {
-        "jalali": (1358, 2, 10),
-        "note": "Asia/Tehran starts 1358 daylight time on 27 May 1979 "
-        "(6 Khordad 1358), not on 1 Farvardin 1358. "
-        "15 Tir 1358 agrees: both are +04:30.",
+        "jalali": (1357, 1, 4),
+        "offset": "+05:00",
+        "note": "Uncertain. Government notice used here: 00:00 on the first "
+        "Friday of Farvardin (4 Farvardin 1357). tz main follows Kayhan and "
+        "starts +05:00 at 24:00 at the end of 4 Farvardin, so this noon is "
+        "still +04:00 there. From 5 Farvardin the two agree at +05:00.",
     },
     {
         "jalali": (1358, 6, 28),
-        "note": "Asia/Tehran ends 1358 daylight time on 18 September 1979 "
-        "(27 Shahrivar). 28 Shahrivar 1358 is still +04:30 on the chart rule "
-        "and already +03:30 in Asia/Tehran. 1359 agrees on both edges "
-        "(21 March 1980 and 22 September 1980).",
-    },
-    {
-        "jalali": (1370, 4, 15),
-        "note": "Asia/Tehran observes daylight time from 3 May 1991 "
-        "(13 Ordibehesht 1370) through 21 September 1991. "
-        "1360–1370 have no daylight time on the chart rule. "
-        "1365 summer agrees: both are +03:30.",
+        "offset": "+04:30",
+        "note": "Uncertain. The cabinet decree used here ends daylight time "
+        "at 24:00 on 30 Shahrivar 1358. tz main ends it at 24:00 on "
+        "27 Shahrivar (18 September 1979), so 28–30 Shahrivar are +03:30 "
+        "there and +04:30 here. 31 Shahrivar agrees at +03:30.",
     },
     {
         "jalali": (1371, 1, 1),
-        "note": "From 1992 through 2022, Asia/Tehran's spring transition is a "
-        "fixed Gregorian midnight (usually 22 March 01:00), not 1 Farvardin "
-        "00:00. Noon on 1 Farvardin 1371 (21 March 1992), 1384 (21 March 2005), "
-        "1387 (20 March 2008), and 1401 (21 March 2022) is +04:30 on the chart "
-        "rule and +03:30 in Asia/Tehran. The next day agrees.",
+        "offset": "+04:30",
+        "note": "Owner decision for every Farvardin-start year from 1371 "
+        "through 1384 and 1387 through 1401: 00:00 at the start of "
+        "1 Farvardin. The decree says 24:00 of 1 Farvardin, and tz main "
+        "reads that as the end of the day, so noon on 1 Farvardin is +03:30 "
+        "there and +04:30 here. 2 Farvardin and 30 Shahrivar agree; "
+        "31 Shahrivar agrees at +03:30. Same one-day spring difference in "
+        "1384, 1387, 1390 and 1401.",
+    },
+)
+
+
+# Local noons where pytz 2024.1's bundled Asia/Tehran disagrees with current
+# tz main. This table agrees with tz main on these noons. The values were
+# read from pytz==2024.1; the Iran path does not import pytz.
+PYTZ_2024_1_OUTDATED = (
+    {
+        "jalali": (1357, 8, 20),
+        "pytz_offset": "+04:00",
+        "note": "pytz 2024.1 keeps +04:00 until 24:00 on 31 December 1978. "
+        "tz main and this table return to +03:30 at 24:00 on 19 Aban 1357 "
+        "(10 November 1978).",
     },
     {
-        "jalali": (1371, 6, 31),
-        "note": "Asia/Tehran ends daylight time at the close of 21 September, "
-        "which is 29 Shahrivar in these years, not 30 Shahrivar 24:00. "
-        "Noon on 30 Shahrivar 1371, 1384, 1387, and 1401 is +04:30 on the "
-        "chart rule and +03:30 in Asia/Tehran. 29 Shahrivar and 1 Mehr agree. "
-        "Midsummer 1380, 1390, and 1401 agree at +04:30. "
-        "1385, 1386, and 1402 agree at +03:30 with no daylight time.",
+        "jalali": (1357, 10, 10),
+        "pytz_offset": "+04:00",
+        "note": "10 Dey 1357 is after 19 Aban, so it is +03:30 here. "
+        "pytz 2024.1 is still +04:00 until the outdated 31 December transition.",
+    },
+    {
+        "jalali": (1358, 3, 5),
+        "pytz_offset": "+03:30",
+        "note": "pytz 2024.1 starts 1358 daylight time at 01:00 on 27 May 1979 "
+        "(6 Khordad). tz main and this table start at 00:00 on 26 May "
+        "(5 Khordad).",
     },
 )
