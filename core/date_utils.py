@@ -5,21 +5,18 @@ Handles Jalali to Gregorian conversion and timezone management
 """
 
 import jdatetime
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import logging
-from .iran_dst_history import should_apply_dst, get_dst_info
+from .iran_dst_history import iran_offset_for_jalali
 
 logger = logging.getLogger(__name__)
 
-# Iran timezone (base UTC+3:30)
+# Kept so existing callers can still pass the Tehran zone object.
+# The offset itself is NOT taken from this zone. IANA Asia/Tehran disagrees
+# with the Solar Hijri rules required for Iranian birth charts; the offset
+# comes only from iran_offset_for_jalali.
 IRAN_TZ = pytz.timezone('Asia/Tehran')
-
-# Iran Standard Time offset (without DST)
-IRAN_STD_OFFSET = timedelta(hours=3, minutes=30)
-
-# Iran Daylight Time offset (with DST)
-IRAN_DST_OFFSET = timedelta(hours=4, minutes=30)
 
 
 class DateTimeConverter:
@@ -66,22 +63,29 @@ class DateTimeConverter:
     @staticmethod
     def local_to_utc(gregorian_date, local_time_str, timezone=IRAN_TZ):
         """
-        Convert local time to UTC considering timezone and DST
-        Uses accurate Iran DST history (1977-2005, 2008-2022 Sept 21)
-        
+        Convert an Iranian local civil time to UTC.
+
+        The Gregorian date is turned back into the Solar Hijri date with the
+        same ``jdatetime`` conversion the rest of the app uses, then the
+        offset is taken from ``iran_offset_for_jalali``. ``timezone`` is
+        accepted for compatibility and is not consulted: every seeded city
+        is Asia/Tehran, and that IANA zone is not the chart rule.
+
         Args:
-            gregorian_date: datetime.date object
+            gregorian_date: datetime.date (or datetime) object
             local_time_str: String in format "HH:MM"
-            timezone: pytz timezone object (default: Asia/Tehran)
-            
+            timezone: ignored; retained so existing callers keep working
+
         Returns:
-            dict with UTC datetime components and Julian Day
+            dict with UTC datetime components and the offset that was applied
         """
+        del timezone  # chart offsets do not follow IANA; see iran_dst_history
         try:
-            # Parse time
+            if isinstance(gregorian_date, datetime):
+                gregorian_date = gregorian_date.date()
+
             hour, minute = map(int, local_time_str.split(':'))
-            
-            # Create naive datetime
+
             naive_dt = datetime(
                 gregorian_date.year,
                 gregorian_date.month,
@@ -90,39 +94,18 @@ class DateTimeConverter:
                 minute,
                 0
             )
-            
-            # Check if DST should be applied based on Iran's official history
-            use_dst = should_apply_dst(
-                gregorian_date.year,
-                gregorian_date.month,
-                gregorian_date.day
+
+            jalali = jdatetime.date.fromgregorian(date=gregorian_date)
+            offset_info = iran_offset_for_jalali(
+                jalali.year, jalali.month, jalali.day, hour, minute
             )
-            
-            # Get DST info for logging
-            dst_info = get_dst_info(gregorian_date.year)
-            
-            if use_dst:
-                # Apply DST: UTC+4:30
-                offset = IRAN_DST_OFFSET
-                logger.info(f"Applying DST for {gregorian_date}: {dst_info['reason']}")
-            else:
-                # Standard time: UTC+3:30
-                offset = IRAN_STD_OFFSET
-                logger.info(f"No DST for {gregorian_date}: {dst_info['reason']}")
-            
-            # Create timezone-aware datetime with correct offset
-            # We manually apply offset instead of using pytz localize
-            # to avoid issues with Iran's complex DST history
+            offset = offset_info['offset']
             utc_dt = naive_dt - offset
-            
-            # Calculate decimal hour for Julian Day
-            utc_hour_decimal = utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0
-            
-            # Format offset string
-            offset_hours = int(offset.total_seconds() // 3600)
-            offset_minutes = int((offset.total_seconds() % 3600) // 60)
-            offset_str = f"+{offset_hours:02d}:{offset_minutes:02d}"
-            
+
+            utc_hour_decimal = (
+                utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0
+            )
+
             result = {
                 'year': utc_dt.year,
                 'month': utc_dt.month,
@@ -134,14 +117,26 @@ class DateTimeConverter:
                 'utc_datetime': utc_dt,
                 'local_datetime': naive_dt,
                 'timezone_name': 'Asia/Tehran',
-                'utc_offset': offset_str,
-                'dst_applied': use_dst,
-                'dst_info': dst_info['reason']
+                'utc_offset': offset_info['offset_str'],
+                'dst_applied': offset_info['dst_applied'],
+                'dst_info': offset_info['rule'],
+                'local_time_status': offset_info['local_time_status'],
+                'transition_resolution': offset_info['resolution'],
+                'jalali_year': jalali.year,
+                'jalali_month': jalali.month,
+                'jalali_day': jalali.day,
             }
-            
-            logger.info(f"Converted local {naive_dt} to UTC {utc_dt} (DST: {use_dst})")
+
+            logger.info(
+                "Converted local %s to UTC %s (offset %s, %s, %s)",
+                naive_dt,
+                utc_dt,
+                offset_info['offset_str'],
+                offset_info['local_time_status'],
+                offset_info['rule'],
+            )
             return result
-            
+
         except Exception as e:
             logger.error(f"Error converting time: {e}")
             raise ValueError(f"خطا در تبدیل زمان: {str(e)}")
@@ -203,6 +198,10 @@ class DateTimeConverter:
             'julian_day': jd,
             'timezone': utc_data['timezone_name'],
             'utc_offset': utc_data['utc_offset'],
+            'dst_applied': utc_data['dst_applied'],
+            'dst_info': utc_data['dst_info'],
+            'local_time_status': utc_data['local_time_status'],
+            'transition_resolution': utc_data['transition_resolution'],
             'utc_datetime': utc_data['utc_datetime'],
             'local_datetime': utc_data['local_datetime']
         }
