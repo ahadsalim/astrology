@@ -1,0 +1,53 @@
+# Asia/Tehran rules copied from IANA tz main (eggert/tz asia)
+# fetched 2026-10-17. Used only to compare chart offsets with current tz.
+# https://github.com/eggert/tz/blob/main/asia
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+# Work around a bug in zic 2022a and earlier.
+Rule	Iran	1910	only	-	Jan	 1	 0:00	0	-
+#
+Rule	Iran	1977	only	-	Mar	21	23:00	1:00	-
+Rule	Iran	1977	only	-	Oct	20	24:00	0	-
+Rule	Iran	1978	only	-	Mar	24	24:00	1:00	-
+Rule	Iran	1978	only	-	Aug	 5	 1:00	0	-
+Rule	Iran	1979	only	-	May	26	 0:00	1:00	-
+Rule	Iran	1979	only	-	Sep	18	24:00	0	-
+Rule	Iran	1980	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	1980	only	-	Sep	22	24:00	0	-
+Rule	Iran	1991	only	-	May	 2	24:00	1:00	-
+Rule	Iran	1992	1995	-	Mar	21	24:00	1:00	-
+Rule	Iran	1991	1995	-	Sep	21	24:00	0	-
+Rule	Iran	1996	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	1996	only	-	Sep	20	24:00	0	-
+Rule	Iran	1997	1999	-	Mar	21	24:00	1:00	-
+Rule	Iran	1997	1999	-	Sep	21	24:00	0	-
+Rule	Iran	2000	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2000	only	-	Sep	20	24:00	0	-
+Rule	Iran	2001	2003	-	Mar	21	24:00	1:00	-
+Rule	Iran	2001	2003	-	Sep	21	24:00	0	-
+Rule	Iran	2004	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2004	only	-	Sep	20	24:00	0	-
+Rule	Iran	2005	only	-	Mar	21	24:00	1:00	-
+Rule	Iran	2005	only	-	Sep	21	24:00	0	-
+Rule	Iran	2008	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2008	only	-	Sep	20	24:00	0	-
+Rule	Iran	2009	2011	-	Mar	21	24:00	1:00	-
+Rule	Iran	2009	2011	-	Sep	21	24:00	0	-
+Rule	Iran	2012	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2012	only	-	Sep	20	24:00	0	-
+Rule	Iran	2013	2015	-	Mar	21	24:00	1:00	-
+Rule	Iran	2013	2015	-	Sep	21	24:00	0	-
+Rule	Iran	2016	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2016	only	-	Sep	20	24:00	0	-
+Rule	Iran	2017	2019	-	Mar	21	24:00	1:00	-
+Rule	Iran	2017	2019	-	Sep	21	24:00	0	-
+Rule	Iran	2020	only	-	Mar	20	24:00	1:00	-
+Rule	Iran	2020	only	-	Sep	20	24:00	0	-
+Rule	Iran	2021	2022	-	Mar	21	24:00	1:00	-
+Rule	Iran	2021	2022	-	Sep	21	24:00	0	-
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Tehran	3:25:44	-	LMT	1916
+			3:25:44	-	TMT	1935 Jun 13 # Tehran Mean Time
+			3:30	Iran	%z	1977 Oct 20 24:00
+			4:00	Iran	%z	1978 Nov 10 24:00
+			3:30	Iran	%z

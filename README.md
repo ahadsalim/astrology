@@ -18,7 +18,7 @@ Persian natal-chart and transit web app powered by **Swiss Ephemeris**. Built fo
 
 ## Stack
 
-Python 3.10+ · Flask · pyswisseph · jdatetime / pytz · matplotlib / numpy · OpenAI-compatible client · SQLite
+Python 3.10+ · Flask · pyswisseph · jdatetime · matplotlib / numpy · OpenAI-compatible client · SQLite
 
 ## Quick start
 
