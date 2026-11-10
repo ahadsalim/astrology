@@ -24,6 +24,6 @@ class Config:
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
 
     # Server Configuration
-    HOST = os.getenv('HOST', '127.0.0.1')
+    HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', 5000))
 
