@@ -1,10 +1,18 @@
 import logging
-from core import DateTimeConverter, AstroEngine, create_chart_image
+from html import escape
+from core import DateTimeConverter, AstroEngine
+from core.course_interpretation import get_full_course_placement
+from core.interpretation_guide import format_planet_house_summary
+from core.soltani_interpretation import soltani_house_note
+from core.astro_engine import PLANET_NAMES_FA
+from core.chart_renderer import PLANET_SYMBOLS
 from data import get_city_info
 from utils.text_formatter import format_chart_for_ai, format_transit_for_ai
 from utils.geo_format import format_arc_dms_html
-from core.vedic_special_states import format_vedic_states_cell_html, vedic_states_td_class
+from core.vedic_special_states import VEDIC_STATE_SYMBOLS, format_vedic_states_cell_html, vedic_states_td_class
 from core.sign_qualities import (
+    SIGN_GENDER_SYMBOLS,
+    SIGN_MODALITY_SYMBOLS,
     SIGN_TRAIT_HEADERS_HTML,
     format_sign_character_cell_html,
     format_sign_trait_cells_html,
@@ -18,7 +26,7 @@ from core.house_meanings import (
 )
 from core.sign_qualities import format_sign_ruler_cell_html
 from core.chart_conditions import format_aspect_cell_html
-from core.traditional_dignities import format_dignity_cell_html
+from core.traditional_dignities import DIGNITY_FA, DIGNITY_SYMBOLS, format_dignity_cell_html
 
 logger = logging.getLogger(__name__)
 
@@ -48,69 +56,91 @@ def format_sign_cell_html(sign_fa: str) -> str:
     return f'<td class="zodiac-sign-cell">{sign_fa}</td>'
 
 
+RULER_COLUMNS = (
+    ('triplicity_ruler', '△۱', 'صاحب مثلثه'),
+    ('triplicity_ruler_2', '△۲', 'صاحب مثلثه ۲'),
+    ('triplicity_participating', '△+', 'شریک مثلثه'),
+    ('term_ruler', '⟦·⟧', 'صاحب حد'),
+    ('face_ruler', '◩', 'صاحب وجه'),
+)
+
+
+DIRECT_MOTION = ('→', 'مستقیم')
+RETROGRADE_MOTION = ('℞', 'راجعه')
+
+
+def _format_ruler_cell(data: dict, field: str) -> str:
+    planet = data.get(field)
+    name = data.get(f'{field}_fa') or PLANET_NAMES_FA.get(planet, '—')
+    symbol = PLANET_SYMBOLS.get(planet)
+    if not symbol:
+        return f'<td class="ruler-column">{escape(name)}</td>'
+    label = escape(name)
+    return (
+        f'<td class="ruler-column"><span class="table-glyph" role="img" '
+        f'aria-label="{label}" title="{label}">{symbol}</span></td>'
+    )
+
+
 def _minor_dignity_and_status_cells(data: dict) -> str:
     """Triplicity, term, face, essential dignity, and motion status cells."""
     dignity_cell = format_dignity_cell_html(data.get('dignity'), data.get('dignity_fa', ''))
 
-    retro = (
-        "<span style='color:red'>راجعه ℞</span>"
-        if data.get('retrograde')
-        else "مستقیم"
+    retrograde = data.get('retrograde')
+    motion_symbol, motion_label = RETROGRADE_MOTION if retrograde else DIRECT_MOTION
+    motion_class = 'table-glyph motion-retrograde' if retrograde else 'table-glyph'
+    motion = (
+        f'<span class="{motion_class}" role="img" aria-label="{motion_label}" '
+        f'title="{motion_label}">{motion_symbol}</span>'
     )
+    ruler_cells = ''.join(_format_ruler_cell(data, field) for field, _, _ in RULER_COLUMNS)
     return (
-        f"<td>{data.get('triplicity_ruler_fa', '-')}</td>"
-        f"<td>{data.get('triplicity_ruler_2_fa', '-')}</td>"
-        f"<td>{data.get('triplicity_participating_fa', '-')}</td>"
-        f"<td>{data.get('term_ruler_fa', '-')}</td>"
-        f"<td>{data.get('face_ruler_fa', '-')}</td>"
+        f"{ruler_cells}"
         f"{dignity_cell}"
         f"<td>{data.get('sun_relation_fa', '—')}</td>"
-        f"<td>{retro}</td>"
+        f'<td class="compact-symbol-column">{motion}</td>'
     )
 
 
 def _chart_point_table_headers(name_column: str = 'سیاره') -> str:
+    ruler_headers = ''.join(
+        f'<th scope="col" class="ruler-column" aria-label="{label}" title="{label}">'
+        f'<bdi dir="ltr">{symbol}</bdi></th>'
+        for _, symbol, label in RULER_COLUMNS
+    )
     return (
-        f"<tr><th>{name_column}</th><th>نماد</th><th>درجه در برج اعتدالی</th><th>برج</th>"
-        f"{SIGN_TRAIT_HEADERS_HTML}"
-        "<th>خانه</th><th>صاحب مثلثه</th><th>صاحب مثلثه ۲</th><th>شریک</th>"
-        "<th>صاحب حد</th><th>صاحب وجه</th>"
-        "<th>کرامت</th><th>وضعیت شمس</th><th>وضعیت</th>"
+        f"<thead><tr><th>{name_column}</th><th>نماد</th><th>درجه در برج اعتدالی</th><th>برج</th>"
+        '<th scope="col" class="compact-text-heading">حالت برج</th>'
+        '<th scope="col" class="compact-symbol-column" title="جنسیت برج" aria-label="جنسیت برج">'
+        '<bdi dir="ltr">♂♀</bdi></th>'
+        f"<th>خانه</th>{ruler_headers}"
+        '<th scope="col" class="compact-text-heading">کرامت</th><th>وضعیت شمس</th>'
+        '<th scope="col" class="compact-symbol-column" title="وضعیت حرکت" aria-label="وضعیت حرکت">↔</th>'
         "<th>درجه در برج ـ سایدریل</th><th>برج ـ سایدریل</th>"
-        "<th>حالت‌های ودایی</th></tr>"
+        '<th scope="col" class="compact-symbol-column" title="حالت‌های ودایی" aria-label="حالت‌های ودایی">✧</th></tr></thead><tbody>'
     )
 
 
-def _format_chart_wheel_html(chart_data) -> str:
-    """Circular birth-chart wheel (display only)."""
-    try:
-        chart_image = create_chart_image(chart_data)
-        return (
-            "<div class='section-title'>📊 نمودار دایره‌ای زایچه</div>"
-            f"<div class='chart-wheel-wrap'>"
-            f"<img src='data:image/png;base64,{chart_image}' "
-            "class='chart-wheel-img' alt='نمودار دایره‌ای زایچه'/>"
-            "</div>"
+def _format_planet_house_cell(planet_key: str | None, name_fa: str, house: int | str) -> str:
+    if not planet_key or not isinstance(house, int) or not 1 <= house <= 12:
+        return f'<td>{house}</td>'
+
+    title = escape(f'{name_fa} در خانهٔ {house}')
+    placement = get_full_course_placement(planet_key, house)
+    if placement:
+        content = (
+            '<article class="course-placement-text">'
+            f'<h3>{escape(placement["title"])}</h3>'
+            f'{placement["html"]}</article>'
+            '<details class="interp-course-placement"><summary>نکتهٔ تکمیلی</summary>'
+            f'<p>{escape(soltani_house_note(name_fa, house))}</p></details>'
         )
-    except Exception as e:
-        logger.warning(f"Could not generate chart image: {e}")
-        return ""
-
-
-def _format_methodology_footnote() -> str:
-    """Single consolidated note on calculation methods (end of astro tables)."""
+    else:
+        summary = format_planet_house_summary(name_fa, house)
+        content = ''.join(f'<p>{escape(line)}</p>' for line in summary.splitlines())
     return (
-        "<p class='astro-methodology-note'>"
-        "محاسبات بر پایهٔ Swiss Ephemeris است؛ خانه‌ها پلاسیدیوس؛ "
-        "درجه و برج اعتدالی تروپیکال و ستون‌های سایدریل با آیانامسای لاهیری؛ "
-        "کرامت: شش سطح از درجهٔ هبوط تا درجهٔ شرف (±۱°)؛ رأس ۳° جوزا / ذنب ۳° قوس (البیرونی)؛ "
-        "اورانوس/نپتون/پلوتو: برج شرف/هبوط مدرن (درجهٔ ۱۵° تقریبی)؛ "
-        "صاحب حد از جدول مصری (Astrodienst)، صاحب مثلثه دوروته (روز/شب/شریک)، "
-        "وضعیت شمس: احتراق/تحت‌الشعاع/تصمیم/تشریق/تغریب؛ "
-        "اتصال: فاعل سریع‌تر → قابل کندتر، فاز ملاقاتی/انفصالی؛ "
-        "صاحب وجه کالدی؛ عقدهٔ قمری True Node؛ "
-        "حالت‌های ودایی فقط از موقعیت سایدریل لاهیری."
-        "</p>"
+        f'<td><a class="planet-house-link" href="#planetHouseModal" aria-haspopup="dialog" '
+        f'aria-label="{title}">{house}</a><template>{content}</template></td>'
     )
 
 
@@ -120,9 +150,11 @@ def _format_chart_point_row(
     data: dict,
     *,
     extra_cells: str = '',
+    planet_key: str | None = None,
     symbol_font_size: str = '18px',
 ) -> str:
     """Build one table row for a planet or lunar node with shared column layout."""
+    house_cell = _format_planet_house_cell(planet_key, name_fa, data.get('house', '—'))
     vedic_state_list = data.get('vedic_states') or []
     vedic_td_class = vedic_states_td_class(vedic_state_list)
     vedic_cell_html = format_vedic_states_cell_html(vedic_state_list)
@@ -130,12 +162,12 @@ def _format_chart_point_row(
         f"<tr><td>{name_fa}</td><td style='font-size:{symbol_font_size}'>{symbol}</td>"
         f"<td>{format_arc_dms_html(data['degree_in_sign'])}</td>"
         f"{format_sign_cell_html(data['sign_fa'])}"
-        f"{format_sign_trait_cells_html(data['sign_fa'])}"
-        f"<td>{data.get('house', '—')}</td>"
+        f"{format_sign_trait_cells_html(data['sign_fa'], compact_traits=True)}"
+        f"{house_cell}"
         f"{extra_cells}"
         f"<td>{format_arc_dms_html(data['degree_in_sign_sidereal'])}</td>"
         f"<td>{data.get('sign_fa_sidereal', '—')}</td>"
-        f"<td class='{vedic_td_class}'>{vedic_cell_html}</td></tr>"
+        f"<td class='{vedic_td_class} compact-symbol-column'>{vedic_cell_html}</td></tr>"
     )
 
 
@@ -162,7 +194,7 @@ class AstroCalculator:
         return SWISS_AVAILABLE and astro_engine is not None
     
     @staticmethod
-    def prepare_birth_data(persian_date, local_time, city_name):
+    def prepare_birth_data(persian_date, local_time, city_name, *, coordinates=None):
         """
         Convert Persian date and local time to Gregorian UTC
         
@@ -170,6 +202,7 @@ class AstroCalculator:
             persian_date: String in format YYYY-MM-DD (e.g., "1400-05-12")
             local_time: String in format HH:MM (e.g., "14:30")
             city_name: Persian city name (e.g., "تهران")
+            coordinates: Stored latitude and longitude when recalculating a saved chart
             
         Returns:
             Dictionary with gregorian date, UTC time, coordinates, and Julian Day
@@ -178,13 +211,13 @@ class AstroCalculator:
             raise RuntimeError("Swiss Ephemeris is not available")
         
         try:
-            # Get city info from database
             city_info = get_city_info(city_name)
-            if not city_info:
-                raise ValueError(f"شهر '{city_name}' در دیتابیس یافت نشد")
-            
-            lat = city_info['lat']
-            lon = city_info['lon']
+            if coordinates is None:
+                if not city_info:
+                    raise ValueError(f"شهر '{city_name}' در دیتابیس یافت نشد")
+                coordinates = city_info['lat'], city_info['lon']
+            lat, lon = coordinates
+            name_en = city_info.get('name_en') if city_info else None
             
             # Use DateTimeConverter for accurate conversion
             dt_data = DateTimeConverter.parse_and_convert(persian_date, local_time)
@@ -200,7 +233,7 @@ class AstroCalculator:
                 "gregorian": dt_data['gregorian_str'],
                 "gregorian_full": dt_data['gregorian_str'],
                 "timezone": dt_data['timezone'],
-                "location_name": f"{city_name} ({city_info['name_en']})",
+                "location_name": f"{city_name} ({name_en})" if name_en else city_name,
                 "local_time": local_time,
                 "utc_time": dt_data['utc_time'],
                 "julian_day": dt_data['julian_day'],
@@ -255,7 +288,10 @@ class AstroCalculator:
             if solar_location:
                 try:
                     # Get coordinates for solar city (already imported at top)
-                    solar_city_info = get_city_info(solar_location)
+                    solar_city_info = (
+                        {'lat': lat, 'lon': lon} if solar_location == birth_data.get('city_name')
+                        else get_city_info(solar_location)
+                    )
                     
                     if solar_city_info:
                         # Extract birth date components
@@ -288,15 +324,14 @@ class AstroCalculator:
                     logger.error(f"Error calculating solar return: {e}", exc_info=True)
                     solar_return_data = None
             
-            html_with_chart = AstroCalculator._format_chart_html(
-                chart_data, birth_data, solar_return_data, include_chart_image=True,
-            )
+            chart_html = AstroCalculator._format_chart_html(chart_data, solar_return_data)
             text_for_ai = format_chart_for_ai(chart_data, birth_data, solar_return_data)
             
             # Return both HTML version (for display) and text version (for AI)
             return {
-                'html': html_with_chart,
+                'html': chart_html,
                 'html_for_ai': text_for_ai,  # Now returns clean text instead of HTML
+                'solar_return_data': solar_return_data,
                 'chart_data': chart_data,
                 'birth_data': birth_data
             }
@@ -362,23 +397,21 @@ class AstroCalculator:
         if not solar_return_data:
             return ''
 
-        current_year = solar_return_data.get('year', '')
-        year_note = f" ({current_year})" if current_year else ''
+        year = solar_return_data.get('year')
+        year_label = f' · {year}' if year else ''
+        city = escape(solar_return_data.get('city_fa') or 'نامشخص')
         html = (
-            "<div class='section-title'>🎂 پیش‌بینی سال جاری — چارت سولار (Solar Return)</div>"
-            "<p class='solar-intro-note'>"
-            "چارت لحظهٔ بازگشت خورشید به همان درجهٔ تولد، در <strong>سالگرد تولد امسال</strong>"
-            f"{year_note}؛ تم‌های یک سال کامل از این سالگرد تا سالگرد بعد را پیش‌بینی می‌کند."
-            "</p>"
-            f"<p style='text-align:center; color:#666; font-size:12px;'>"
-            f"محل حضور در لحظهٔ سالگرد: {solar_return_data.get('city_fa', 'نامشخص')}</p>"
+            "<section class='solar-return' aria-labelledby='solarReturnTitle'>"
+            "<header class='solar-return__header'>"
+            f"<h2 id='solarReturnTitle'>بازگشت خورشید{year_label}</h2>"
+            f"<p>شهر سالگرد: {city}</p></header>"
         )
 
         html += "<h4 style='color:#2c3e50; margin-top:15px;'>زوایای اصلی سولار:</h4>"
         html += "<table class='astro-table'>"
         html += (
-            "<tr><th>زاویه</th><th>درجه کل</th><th>درجه در برج</th><th>برج</th>"
-            f"{SIGN_TRAIT_HEADERS_HTML}</tr>"
+            "<thead><tr><th>زاویه</th><th>درجه کل</th><th>درجه در برج</th><th>برج</th>"
+            f"{SIGN_TRAIT_HEADERS_HTML}</tr></thead><tbody>"
         )
         asc = solar_return_data['angles']['asc']
         mc = solar_return_data['angles']['mc']
@@ -396,13 +429,13 @@ class AstroCalculator:
             f"{format_sign_cell_html(mc['sign_fa'])}"
             f"{format_sign_trait_cells_html(mc['sign_fa'])}</tr>"
         )
-        html += "</table>"
+        html += "</tbody></table>"
 
         html += "<h4 style='color:#2c3e50; margin-top:15px;'>کواکب در چارت سولار:</h4>"
         html += "<table class='astro-table'>"
         html += (
-            "<tr><th>سیاره</th><th>درجه کل</th><th>درجه در برج</th><th>برج</th>"
-            f"{SIGN_TRAIT_HEADERS_HTML}</tr>"
+            "<thead><tr><th>سیاره</th><th>درجه کل</th><th>درجه در برج</th><th>برج</th>"
+            f"{SIGN_TRAIT_HEADERS_HTML}</tr></thead><tbody>"
         )
         for name, data in solar_return_data['planets'].items():
             html += (
@@ -412,8 +445,8 @@ class AstroCalculator:
                 f"{format_sign_cell_html(data['sign_fa'])}"
                 f"{format_sign_trait_cells_html(data['sign_fa'])}</tr>"
             )
-        html += "</table>"
-        return html
+        html += "</tbody></table>"
+        return html + "</section>"
 
     @staticmethod
     def _format_transit_planet_rows(transit_group: dict) -> str:
@@ -502,13 +535,8 @@ class AstroCalculator:
         return html
 
     @staticmethod
-    def _format_chart_html(chart_data, birth_data, solar_return_data, include_chart_image=True):
+    def _format_chart_html(chart_data, solar_return_data):
         """Format natal chart data as HTML (no transits)."""
-        planet_symbols = {
-            'Sun': '☉', 'Moon': '☽', 'Mercury': '☿', 'Venus': '♀', 'Mars': '♂',
-            'Jupiter': '♃', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇'
-        }
-
         html = "<div class='section-title'>🏠 خانه‌ها (پلاسیدیوس)</div>"
         html += "<table class='astro-table houses-table'>"
         html += HOUSE_TABLE_HEADERS_HTML
@@ -527,25 +555,48 @@ class AstroCalculator:
 
         html += HOUSE_TABLE_FOOTER_HTML + "</table>"
 
-        html += "<div class='section-title'>🪐 کواکب</div>"
-        html += "<table class='astro-table'>"
+        html += "<div class='section-title' id='natal-planets-title'>🪐 کواکب</div>"
+        ruler_key = ' · '.join(
+            f'<bdi dir="ltr">{symbol}</bdi> {label}' for _, symbol, label in RULER_COLUMNS
+        )
+        gender_key = ' · '.join(f'{symbol} {label}' for label, symbol in SIGN_GENDER_SYMBOLS.items())
+        motion_key = ' · '.join(f'{symbol} {label}' for symbol, label in (DIRECT_MOTION, RETROGRADE_MOTION))
+        modality_key = ' · '.join(f'{symbol} {label}' for label, symbol in SIGN_MODALITY_SYMBOLS.items())
+        vedic_key = ' · '.join(f'{symbol} {label}' for label, symbol in VEDIC_STATE_SYMBOLS.items())
+        dignity_key = ' · '.join(
+            f'<bdi dir="ltr">{symbol}</bdi> {DIGNITY_FA[key]}' for key, symbol in DIGNITY_SYMBOLS.items()
+        )
+        html += (
+            "<details class='ruler-symbol-key'><summary>راهنمای نماد ستون‌ها</summary>"
+            f"<p>{ruler_key}</p><p>جنسیت برج: {gender_key} | وضعیت حرکت: {motion_key}</p>"
+            f"<p>حالت برج: {modality_key}</p><p>حالت‌های ودایی: {vedic_key}</p>"
+            f"<p>کرامت: {dignity_key}</p></details>"
+        )
+        html += (
+            "<div class='chart-point-scroll' role='region' tabindex='0' aria-labelledby='natal-planets-title'>"
+            "<table class='astro-table'>"
+        )
         html += _chart_point_table_headers('سیاره')
 
         for name, data in chart_data['planets'].items():
             if data:
-                symbol = planet_symbols.get(name, '')
+                symbol = PLANET_SYMBOLS.get(name, '')
                 html += _format_chart_point_row(
                     data['name_fa'],
                     symbol,
                     data,
                     extra_cells=_minor_dignity_and_status_cells(data),
+                    planet_key=name,
                 )
 
-        html += "</table>"
+        html += "</tbody></table></div>"
 
         if chart_data.get('nodes'):
-            html += "<div class='section-title'>🌙 عقده‌های قمری</div>"
-            html += "<table class='astro-table'>"
+            html += "<div class='section-title' id='natal-nodes-title'>🌙 عقده‌های قمری</div>"
+            html += (
+                "<div class='chart-point-scroll' role='region' tabindex='0' aria-labelledby='natal-nodes-title'>"
+                "<table class='astro-table'>"
+            )
             html += _chart_point_table_headers('نام')
 
             nn = chart_data['nodes']['north_node']
@@ -557,15 +608,15 @@ class AstroCalculator:
             html += _format_chart_point_row(
                 sn['name_fa'], '☋', sn, extra_cells=_minor_dignity_and_status_cells(sn)
             )
-            html += "</table>"
+            html += "</tbody></table></div>"
 
         # Add aspects
         if chart_data.get('aspects'):
-            html += "<div class='section-title'>⚹ اتصالات</div>"
+            html += "<div class='section-title'>⚹ اتصالات به نظر</div>"
             html += "<table class='astro-table aspects-table'>"
             html += (
-                "<tr><th>فاعل → قابل</th><th>اتصال</th><th>طبع</th>"
-                "<th>فاز</th><th>زاویه</th><th>تقریب</th></tr>"
+                "<thead><tr><th>فاعل → قابل</th><th>اتصال</th><th>طبع</th>"
+                "<th>فاز</th><th>زاویه</th><th>تقریب</th></tr></thead><tbody>"
             )
 
             for aspect in chart_data['aspects'][:20]:
@@ -579,7 +630,7 @@ class AstroCalculator:
                     f"<td>{format_arc_dms_html(aspect['orb'])}{exact_mark}</td></tr>"
                 )
 
-            html += "</table>"
+            html += "</tbody></table>"
             html += (
                 "<p style='text-align:center; color:#888; font-size:11px; margin-top:8px;'>"
                 "⭐ اتصال دقیق (تقریب &lt; ۱°)؛ ملاقاتی = نزدیک‌شونده، انفصالی = دورشونده؛ "
@@ -589,11 +640,31 @@ class AstroCalculator:
                 "</p>"
             )
 
+        local_aspects = chart_data.get('local_aspects')
+        if local_aspects is not None:
+            html += "<div class='section-title'>اتصالات به محل</div>"
+            html += (
+                "<p class='astro-methodology-note'>اتفاق قوت: تقارن نسبت به محور حمل–میزان؛ "
+                "اتفاق طریقت: تقارن نسبت به محور سرطان–جدی. "
+                "معیار نمایش: فاصلهٔ طول‌های اعتدالی تا تقارن کمتر از ۱° است.</p>"
+            )
+            if local_aspects:
+                html += (
+                    "<table class='astro-table local-aspects-table'>"
+                    "<thead><tr><th>دو نقطه</th><th>نوع اتصال</th><th>فاز</th><th>فاصله تا تقارن</th></tr></thead><tbody>"
+                )
+                for aspect in local_aspects:
+                    # Keep the displayed arc below one degree, even near the cutoff.
+                    minutes, seconds = divmod(int(aspect['orb'] * 3600), 60)
+                    approximation = f'<span class="arc-dms">{minutes:02d}′ {seconds:02d}″</span>'
+                    html += (
+                        f"<tr><td>{aspect['pair_fa']}</td><td>{aspect['type_fa']}</td>"
+                        f"<td>{aspect['phase_fa']}</td><td>{approximation}</td></tr>"
+                    )
+                html += "</tbody></table>"
+            else:
+                html += "<p>در لحظهٔ تولد، اتصال به محل با تقریب کمتر از ۱° یافت نشد.</p>"
+
         html += AstroCalculator._format_solar_return_html(solar_return_data)
-
-        if include_chart_image:
-            html += _format_chart_wheel_html(chart_data)
-
-        html += _format_methodology_footnote()
 
         return html

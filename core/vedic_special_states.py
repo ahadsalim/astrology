@@ -114,6 +114,14 @@ STATE_STYLE_KEYS = {
 }
 
 
+VEDIC_STATE_SYMBOLS = {
+    STATE_LABELS['pushkara_navamsa']: '✿',
+    STATE_LABELS['vargottama']: '≡',
+    STATE_LABELS['ashtamamsa']: 'Ⅷ',
+    STATE_LABELS['gandanta']: '∞',
+}
+
+
 def vedic_states_td_class(states: List[str]) -> str:
     """CSS class for the Vedic states table cell."""
     if not states:
@@ -125,17 +133,16 @@ def vedic_states_td_class(states: List[str]) -> str:
 
 
 def format_vedic_states_cell_html(states: List[str]) -> str:
-    """
-    HTML for the Vedic states cell.
-    One state: plain text (background on <td>).
-    Two or more: white cell, each label with its own font color.
-    """
+    """Render one glyph per state, preserving the existing single and combined colors."""
     if not states:
         return '—'
-    if len(states) == 1:
-        return states[0]
-    parts = []
+    glyphs = []
     for label in states:
-        key = STATE_STYLE_KEYS[label]
-        parts.append(f'<span class="vedic-label vedic-label--{key}">{label}</span>')
-    return ' <span class="vedic-sep">/</span> '.join(parts)
+        css_class = 'table-glyph'
+        if len(states) > 1:
+            css_class += f' vedic-label--{STATE_STYLE_KEYS[label]}'
+        glyphs.append(
+            f'<span class="{css_class}" role="img" aria-label="{label}" title="{label}">'
+            f'{VEDIC_STATE_SYMBOLS[label]}</span>'
+        )
+    return ' '.join(glyphs)

@@ -41,6 +41,8 @@ SIGN_MODALITY_TITLE = {
     'زوجسدین': 'متغیر، منعطف، در حال تغییر و انتقال',
 }
 
+SIGN_MODALITY_SYMBOLS = {'منقلب': '↑', 'ثابت': '■', 'زوجسدین': '◫'}
+
 SIGN_GENDER_FA = {
     'حمل': 'مذکر',
     'جوزا': 'مذکر',
@@ -55,6 +57,8 @@ SIGN_GENDER_FA = {
     'جدی': 'مونث',
     'حوت': 'مونث',
 }
+
+SIGN_GENDER_SYMBOLS = {'مذکر': '♂', 'مونث': '♀'}
 
 SIGN_SECT_FA = {
     'حمل': 'روزی',
@@ -126,7 +130,16 @@ def format_sign_ruler_cell_html(sign_fa: str) -> str:
     return f'<td class="sign-ruler-cell">{get_sign_ruler_fa(sign_fa)}</td>'
 
 
-def format_sign_trait_cells_html(sign_fa: str, *, gender_extra_class: str = '') -> str:
+def _trait_symbol_html(symbol: str | None, label: str, description: str = '') -> str:
+    if not symbol:
+        return label
+    tooltip = f'{label} — {description}' if description else label
+    return f'<span class="table-glyph" role="img" aria-label="{label}" title="{tooltip}">{symbol}</span>'
+
+
+def format_sign_trait_cells_html(
+    sign_fa: str, *, gender_extra_class: str = '', compact_traits: bool = False
+) -> str:
     """Two table cells after tropical sign: modality and gender (colored by day/night sect)."""
     if not sign_fa or sign_fa == '—':
         return '<td>—</td><td>—</td>'
@@ -145,7 +158,16 @@ def format_sign_trait_cells_html(sign_fa: str, *, gender_extra_class: str = '') 
         sect_class = 'sign-sect-night'
 
     gender_class = f'sign-gender-cell {sect_class} {gender_extra_class}'.strip()
+    modality_class = 'sign-modality-cell'
+    modality_content = modality
+    gender_content = gender
+    if compact_traits:
+        modality_class += ' compact-symbol-column'
+        gender_class += ' compact-symbol-column'
+        modality_content = _trait_symbol_html(SIGN_MODALITY_SYMBOLS.get(modality), modality, modality_title)
+        gender_content = _trait_symbol_html(SIGN_GENDER_SYMBOLS.get(gender), gender)
+        modality_attr = ''
     return (
-        f'<td class="sign-modality-cell"{modality_attr}>{modality}</td>'
-        f'<td class="{gender_class}">{gender}</td>'
+        f'<td class="{modality_class}"{modality_attr}>{modality_content}</td>'
+        f'<td class="{gender_class}">{gender_content}</td>'
     )

@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block title %}آسمان در لحظه تولد — {{ name }}{% endblock %}
 
+{% block body_class %}calculation-page{% endblock %}
+
 {% block head_extra %}
 <style>
     .info-panels-row { display: flex; gap: 14px; align-items: flex-start; margin: 14px 0; flex-wrap: nowrap; }
     .info-panel-main { flex: 1 1 auto; min-width: 0; }
     .info-panel-legend { flex: 0 0 auto; width: 320px; max-width: 34%; }
-    .info-panel-legend .astro-legend-title { font-size: 0.8rem; color: var(--ink-muted); margin-bottom: 6px; }
-    .warning-box { background: rgba(255,207,92,0.12); border: 1px solid rgba(255,207,92,0.4); border-radius: 12px; padding: 12px 14px; margin: 12px 0; color: #ffe6ad; }
+    .info-panels-row > .card { padding: 16px; }
+    .info-panels-row > .card + .card { margin-top: 0; }
+    .info-panel-main .info-table { margin: 0; }
+    .warning-box { background: rgba(255,207,92,0.12); border: 1px solid rgba(255,207,92,0.4); border-radius: 12px; padding: 12px 14px; margin: 12px 0; color: #76551c; }
     @media (max-width: 760px) {
         .info-panels-row { flex-wrap: wrap; }
         .info-panel-main, .info-panel-legend { flex: 1 1 100%; width: 100%; max-width: 100%; }
@@ -19,43 +23,42 @@
 <div class="shell">
     <div class="page-top-toolbar">
         <div class="section-head">
-            <span class="brand__mark">🌌</span>
+            <img class="site-icon" src="{{ url_for('static', filename='site-icon.svg') }}" width="34" height="34" alt="">
             <div>
                 <h1 style="font-size:1.35rem;">آسمان در لحظه تولد — {{ name }}</h1>
                 {% if interpretation_guide %}
-                <a href="#" class="interp-guide-link" id="openInterpGuide" role="button">📖 راهنمای تفسیر (خانه، کوکب، اتصال، قوت)</a>
+                <a href="#interpGuideModal" class="interp-guide-link" id="openInterpGuide" aria-controls="interpGuideModal" aria-expanded="false">📖 راهنمای تفسیر زایچه</a>
                 {% endif %}
             </div>
         </div>
         {% if astro_data %}
-        <button type="button" onclick="window.print()" class="btn-print-top" title="چاپ">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
+        <button type="button" class="btn-print-top" onclick="window.print()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <path d="M6 14h12v7H6zM6 12h1"/>
             </svg>
-            چاپ
+            چاپ زایچه
         </button>
         {% endif %}
     </div>
 
     <div class="info-panels-row">
-        <div class="info-panel-main card" style="padding:16px;">
-            <table class="info-table" style="margin:0;">
+        <div class="info-panel-main card">
+            <table class="info-table">
                 <tr>
                     <td>نام</td><td>{{ name }}</td>
                     {% if birth_data %}<td>منطقه زمانی</td><td>{{ birth_data.timezone }}</td>{% else %}<td></td><td></td>{% endif %}
                 </tr>
                 <tr>
-                    <td>تاریخ (شمسی)</td><td>{{ date }}</td>
+                    <td>تاریخ (شمسی)</td><td>{{ birth_data.jalali_date }}</td>
                     {% if birth_data %}<td>تاریخ (میلادی)</td><td>{{ birth_data.gregorian_full }}</td>{% else %}<td></td><td></td>{% endif %}
                 </tr>
                 <tr>
-                    <td>ساعت (محلی)</td><td>{{ time }}</td>
+                    <td>ساعت (محلی)</td><td>{{ birth_data.local_time }}</td>
                     {% if birth_data %}<td>ساعت (UTC)</td><td>{{ birth_data.utc_time }}</td>{% else %}<td></td><td></td>{% endif %}
                 </tr>
                 <tr>
-                    <td>شهر تولد</td><td>{{ place }}</td>
+                    <td>شهر تولد</td><td>{{ birth_data.city_name }}</td>
                     {% if birth_data %}
                     <td>مختصات</td>
                     <td class="geo-coords-cell">
@@ -77,14 +80,14 @@
                     <td>{% if birth_data.asc_sign_fa %}<span class="asc-sign-symbol">{{ birth_data.asc_sign_symbol }}</span> {{ birth_data.asc_sign_fa }}{% else %}—{% endif %}</td>
                 </tr>
                 {% endif %}
-                {% if solar_city %}<tr><td>شهر حضور در سالگرد</td><td colspan="3">{{ solar_city }}</td></tr>{% endif %}
-                {% if vision %}<tr><td colspan="4" style="text-align:center; font-weight:bold;">دغدغه: {{ vision }}</td></tr>{% endif %}
+                {% if birth_data.solar_city != birth_data.city_name %}<tr><td>شهر حضور در سالگرد</td><td colspan="3">{{ birth_data.solar_city }}</td></tr>{% endif %}
+                {% if birth_data.vision %}<tr><td colspan="4" style="text-align:center; font-weight:bold;">دغدغه: {{ birth_data.vision }}</td></tr>{% endif %}
             </table>
         </div>
 
         <div class="info-panel-legend card legend-card">
-            <div class="astro-legend-title">راهنمای رنگ‌ها</div>
-            <table class="color-legend-table">
+            <table class="color-legend-table" aria-label="راهنمای رنگ‌ها">
+                <tr><th colspan="6">راهنمای رنگ‌ها</th></tr>
                 <tr class="legend-group">
                     <td colspan="2">جنسیت</td><td colspan="2">روز / شب</td>
                     <td colspan="2">کرامت<span class="legend-group-sub">قوی‌ترین ← ضعیف‌ترین</span></td>
@@ -134,23 +137,16 @@
         {% endif %}
     </div>
 
-    {% if astro_data_for_ai %}
-    <textarea id="chartTextForPrompt" class="hidden">{{ astro_data_for_ai }}</textarea>
+    {% if saved %}
+    <p class="summary-status text-center" role="status">اطلاعات تولد با شهر «{{ birth_data.city_name }}» در زایچه‌ها ذخیره شد.</p>
     {% endif %}
-
-    <div class="btn-group">
-        <button type="button" class="btn btn-ai" id="aiAnalyzeBtn" onclick="runAnalysis()">
-            <span class="btn-text">✨ تحلیل با هوش مصنوعی (Agnes)</span>
-            <span class="btn-loading hidden"><span class="spinner"></span> در حال تحلیل…</span>
-        </button>
-        <button type="button" onclick="viewPrompt()" class="btn btn-accent">📋 مشاهده پرامپت (کپی دستی)</button>
-        <button type="button" onclick="window.location.href='/'" class="btn btn-secondary">🏠 صفحه اصلی</button>
-    </div>
-
-    <div id="aiPanel" class="ai-panel hidden">
-        <div class="ai-panel__head">🔮 تحلیل هوش مصنوعی <span class="badge">Agnes AI</span></div>
-        <div class="ai-panel__body" id="aiPanelBody"></div>
-    </div>
+    {% if summary_snapshot %}
+    <form class="summary-request action-buttons" action="{{ url_for('summarize_chart') }}" method="post" id="summaryRequest">
+        <input type="hidden" name="chart" value="{{ summary_snapshot }}">
+        <button class="btn btn-ai" type="submit">جمع‌بندی</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('save_birth') }}">ذخیره</button>
+    </form>
+    {% endif %}
 </div>
 
 {% if interpretation_guide %}
@@ -165,134 +161,77 @@
     </div>
 </div>
 {% endif %}
+
+{% if astro_data %}
+<dialog class="planet-house-dialog" id="planetHouseModal" aria-labelledby="planetHouseTitle">
+    <header class="interp-modal-header">
+        <h2 id="planetHouseTitle"></h2>
+        <form method="dialog">
+            <button type="submit" class="interp-modal-close" aria-label="بستن" autofocus>&times;</button>
+        </form>
+    </header>
+    <div class="interp-modal-body" id="planetHouseBody" tabindex="0"></div>
+</dialog>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const CTX = {
-        name: {{ name|tojson }},
-        date: {{ date|tojson }},
-        time: {{ time|tojson }},
-        place: {{ place|tojson }},
-        vision: {{ vision|tojson }},
-        birth_data: {{ (birth_data or {})|tojson }}
-    };
-
     (function() {
         var modal = document.getElementById('interpGuideModal');
         var openBtn = document.getElementById('openInterpGuide');
         if (!modal || !openBtn) return;
         var closeBtn = document.getElementById('closeInterpGuide');
         var backdrop = document.getElementById('interpGuideBackdrop');
-        function openModal(e) { if (e) e.preventDefault(); modal.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
-        function closeModal() { modal.classList.remove('is-open'); document.body.style.overflow = ''; }
+        function openModal(e) {
+            e.preventDefault();
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            openBtn.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+            closeBtn.focus();
+        }
+        function closeModal() {
+            if (!modal.classList.contains('is-open')) return;
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            openBtn.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            openBtn.focus();
+        }
         openBtn.addEventListener('click', openModal);
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (backdrop) backdrop.addEventListener('click', closeModal);
         document.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') closeModal(); });
     })();
 
-    function getAstroText() {
-        var el = document.getElementById('chartTextForPrompt');
-        return el ? el.value : '';
-    }
+    (function() {
+        const dialog = document.getElementById('planetHouseModal');
+        const chart = document.getElementById('astroContent');
+        if (!dialog || !chart) return;
 
-    function runAnalysis() {
-        var btn = document.getElementById('aiAnalyzeBtn');
-        var panel = document.getElementById('aiPanel');
-        var body = document.getElementById('aiPanelBody');
-        panel.classList.remove('hidden');
-        btn.disabled = true;
-        btn.querySelector('.btn-text').classList.add('hidden');
-        btn.querySelector('.btn-loading').classList.remove('hidden');
-        body.innerHTML = '<div class="ai-loading"><div class="ai-orbit"></div><div>در حال تحلیل زایچه با هوش مصنوعی Agnes…<br><small>این کار ممکن است چند لحظه طول بکشد.</small></div></div>';
-        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const title = document.getElementById('planetHouseTitle');
+        const body = document.getElementById('planetHouseBody');
+        chart.addEventListener('click', (event) => {
+            const link = event.target.closest('.planet-house-link');
+            if (!link) return;
+            event.preventDefault();
+            title.textContent = link.getAttribute('aria-label');
+            body.replaceChildren(link.nextElementSibling.content.cloneNode(true));
+            dialog.showModal();
+            body.scrollTop = 0;
+        });
+        dialog.addEventListener('click', (event) => {
+            if (event.target === dialog) dialog.close();
+        });
+    })();
 
-        var fd = new URLSearchParams();
-        fd.append('astro_data', getAstroText());
-        fd.append('vision', CTX.vision || '');
-        fd.append('name', CTX.name || '');
-        fd.append('date', CTX.date || '');
-        fd.append('time', CTX.time || '');
-        fd.append('place', CTX.place || '');
-
-        fetch('/analyze', { method: 'POST', body: fd })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.success) {
-                    renderAnalysis(data.analysis_html, data.analysis_text);
-                } else {
-                    renderError(data);
-                }
-            })
-            .catch(function(err) {
-                renderError({ error: 'خطا در ارتباط با سرور: ' + err });
-            })
-            .finally(function() {
-                btn.disabled = false;
-                btn.querySelector('.btn-text').classList.remove('hidden');
-                btn.querySelector('.btn-loading').classList.add('hidden');
-            });
-    }
-
-    function renderAnalysis(analysisHtml, analysisText) {
-        var body = document.getElementById('aiPanelBody');
-        window.__aiAnalysisText = analysisText || '';
-        body.innerHTML =
-            '<div class="ai-analysis" id="aiAnalysisContent">' + analysisHtml + '</div>' +
-            '<div class="action-buttons" style="justify-content:flex-start;">' +
-                '<button class="btn btn-primary btn-sm" style="width:auto" id="aiSaveBtn" onclick="saveChart()">💾 ذخیره زایچه</button>' +
-                '<button class="btn btn-secondary btn-sm" onclick="copyAnalysis()">📋 کپی متن</button>' +
-                '<button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ چاپ</button>' +
-            '</div>';
-    }
-
-    function renderError(data) {
-        var body = document.getElementById('aiPanelBody');
-        var extra = '';
-        if (data.code === 'no_api_key') {
-            extra = '<p style="margin-top:10px">برای فعال‌سازی، یک کلید رایگان از ' +
-                '<a href="https://platform.agnes-ai.com/" target="_blank" style="color:#ffcf5c">Agnes AI</a> بگیرید و ' +
-                'در متغیر محیطی <code>API_KEY</code> قرار دهید.</p>';
+    document.getElementById('summaryRequest')?.addEventListener('submit', (event) => {
+        const button = event.submitter;
+        if (button && !button.hasAttribute('formaction')) {
+            button.disabled = true;
+            button.textContent = 'در حال تهیهٔ جمع‌بندی…';
         }
-        body.innerHTML = '<div class="ai-error">⚠️ ' + (data.error || 'خطای نامشخص') + extra + '</div>';
-    }
-
-    function copyAnalysis() {
-        var text = window.__aiAnalysisText || document.getElementById('aiAnalysisContent').innerText;
-        navigator.clipboard.writeText(text).then(function() { alert('✅ متن تحلیل کپی شد'); });
-    }
-
-    function saveChart() {
-        var btn = document.getElementById('aiSaveBtn');
-        btn.disabled = true; btn.textContent = '⏳ در حال ذخیره…';
-        var fd = new FormData();
-        fd.append('name', CTX.name || '');
-        fd.append('date', CTX.date || '');
-        fd.append('time', CTX.time || '');
-        fd.append('place', CTX.place || '');
-        fd.append('vision', CTX.vision || '');
-        var astro = document.getElementById('astroContent');
-        fd.append('astro_data', astro ? astro.innerHTML : '');
-        fd.append('ai_analysis', document.getElementById('aiAnalysisContent').innerHTML);
-        fd.append('birth_data', JSON.stringify(CTX.birth_data || {}));
-        fetch('/save', { method: 'POST', body: fd })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) { alert('✅ ' + d.message + ' (شناسه: ' + d.chart_id + ')'); btn.textContent = '✅ ذخیره شد'; }
-                else { alert('❌ ' + d.message); btn.disabled = false; btn.textContent = '💾 ذخیره زایچه'; }
-            })
-            .catch(function() { alert('❌ خطا در ذخیره‌سازی'); btn.disabled = false; btn.textContent = '💾 ذخیره زایچه'; });
-    }
-
-    function viewPrompt() {
-        const form = document.createElement('form');
-        form.method = 'POST'; form.action = '/view-prompt'; form.target = '_blank';
-        const fields = { name: CTX.name, date: CTX.date, time: CTX.time, place: CTX.place, vision: CTX.vision, astro_data: getAstroText() };
-        for (const [k, v] of Object.entries(fields)) {
-            const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v || ''; form.appendChild(i);
-        }
-        document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-    }
+    });
 </script>
 {% endblock %}

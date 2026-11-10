@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set nav = 'settings' %}
+{% block title %}تنظیمات — نجوم احکامی{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="card">
+        <header class="section-head"><h1>تنظیمات هوش مصنوعی</h1></header>
+        {% if error %}<p class="ai-error" role="alert">{{ error }}</p>{% endif %}
+        {% if saved and not error %}<p class="summary-status" role="status">تنظیمات ذخیره شد.</p>{% endif %}
+        <form class="settings-form" method="post" action="{{ url_for('settings') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label for="api_key">کلید API</label>
+                <input type="password" dir="ltr" id="api_key" name="api_key" maxlength="2048"
+                       autocomplete="new-password" spellcheck="false" aria-describedby="api_key_help"
+                       {% if not has_key %}required{% endif %}>
+                <p class="help-text" id="api_key_help">
+                    {% if has_key %}کلید تنظیم شده است. برای نگه داشتن کلید فعلی، این کادر را خالی بگذارید.
+                    {% else %}کلید را از سرویس هوش مصنوعی خود دریافت کنید.{% endif %}
+                </p>
+            </div>
+            <div>
+                <label for="base_url">آدرس پایهٔ سرویس (Base URL)</label>
+                <input type="url" dir="ltr" id="base_url" name="base_url" value="{{ base_url }}"
+                       required maxlength="2048" spellcheck="false" placeholder="https://example.com/v1">
+            </div>
+            <div>
+                <label for="model">نام مدل</label>
+                <input type="text" dir="ltr" id="model" name="model" value="{{ model }}"
+                       required maxlength="200" spellcheck="false">
+            </div>
+            <button type="submit" class="btn btn-primary btn-primary--compact">ذخیره تنظیمات</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

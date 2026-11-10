@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0b1030">
-    <title>{% block title %}نجوم اطلس{% endblock %}</title>
+    <meta name="theme-color" content="#f5f7fb">
+    <title>{% block title %}نجوم احکامی{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='site-icon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block head_extra %}{% endblock %}
 </head>
-<body>
-    <div class="stars" aria-hidden="true"></div>
-
+<body class="{% block body_class %}{% if nav == "home" %}home-page{% endif %}{% endblock %}">
     {% if not hide_nav %}
     <nav class="navbar">
         <div class="navbar__inner">
             <a class="brand" href="/">
-                <span class="brand__mark">🌌</span>
-                <span class="brand__name"><b>نجوم</b> <span>اطلس</span></span>
+                <img class="site-icon" src="{{ url_for('static', filename='site-icon.svg') }}" width="34" height="34" alt="">
+                {% if nav == "home" %}
+                <h1 class="brand__name"><b>نجوم</b> <span>احکامی</span> — سامانه تحلیل زایچه تولد</h1>
+                {% else %}
+                <span class="brand__name"><b>نجوم</b> <span>احکامی</span></span>
+                {% endif %}
             </a>
             <div class="nav-links">
                 <a href="/" class="{% if nav == 'home' %}active{% endif %}">🏠 خانه</a>
                 <a href="/charts" class="{% if nav == 'charts' %}active{% endif %}">📚 زایچه‌ها</a>
                 <a href="/cities-admin" class="{% if nav == 'cities' %}active{% endif %}">🏙️ شهرها</a>
+                <a href="{{ url_for('settings') }}"{% if nav == 'settings' %} class="active" aria-current="page"{% endif %}>⚙️ تنظیمات</a>
             </div>
         </div>
     </nav>
@@ -32,7 +36,7 @@
     </main>
 
     <footer class="footer">
-        ساخته‌شده با ✨ نجوم اطلس — محاسبات دقیق بر پایهٔ Swiss Ephemeris
+        محاسبات دقیق بر پایهٔ Swiss Ephemeris - ساخته شده توسط احد
     </footer>
 
     {% block scripts %}{% endblock %}

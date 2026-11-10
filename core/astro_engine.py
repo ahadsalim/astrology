@@ -9,7 +9,7 @@ import logging
 from typing import Dict, List, Tuple
 import math
 
-from core.chart_conditions import enrich_aspect_record, get_sun_relation
+from core.chart_conditions import calculate_local_aspects, enrich_aspect_record, get_sun_relation
 from core.traditional_dignities import (
     chart_is_diurnal,
     get_dignity_fa,
@@ -392,19 +392,8 @@ class AstroEngine:
 
         return 1  # Default to first house if calculation fails
     
-    def calculate_aspects(self, planets_data: Dict, nodes_data: Dict = None) -> List[Dict]:
-        """
-        Calculate aspects between planets and optional lunar nodes
-        
-        Args:
-            planets_data: Dictionary of planet positions
-            nodes_data: Optional dictionary of lunar nodes data
-            
-        Returns:
-            List of aspect data
-        """
-        aspects_list = []
-
+    @staticmethod
+    def _natal_aspect_points(planets_data: Dict, nodes_data: Dict | None) -> Dict:
         # Build aspect points using planets and optional lunar nodes
         aspect_points = {}
         for planet_name, planet_data in planets_data.items():
@@ -432,7 +421,22 @@ class AstroEngine:
                     'speed': south_node.get('speed', 0.0),
                     'name_fa': NODE_NAMES_FA['SouthNode'],
                 }
+        return aspect_points
 
+    def calculate_aspects(self, planets_data: Dict, nodes_data: Dict = None) -> List[Dict]:
+        """
+        Calculate aspects between planets and optional lunar nodes
+        
+        Args:
+            planets_data: Dictionary of planet positions
+            nodes_data: Optional dictionary of lunar nodes data
+            
+        Returns:
+            List of aspect data
+        """
+        aspects_list = []
+
+        aspect_points = self._natal_aspect_points(planets_data, nodes_data)
         point_names = list(aspect_points.keys())
         
         for i, point1 in enumerate(point_names):
@@ -919,6 +923,7 @@ class AstroEngine:
             'houses': houses,
             'nodes': nodes,
             'aspects': aspects,
+            'local_aspects': calculate_local_aspects(self._natal_aspect_points(planets, nodes)),
             'is_diurnal': is_diurnal,
             'sect_fa': 'روزانه' if is_diurnal else 'شبانه',
             'julian_day': julian_day,

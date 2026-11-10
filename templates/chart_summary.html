@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}جمع‌بندی زایچه{% if birth %} — {{ birth.name }}{% endif %}{% endblock %}
+{% block body_class %}calculation-page summary-page{% endblock %}
+
+{% macro entries(items) %}
+<ul class="summary-observations">
+    {% for item in items %}
+    <li>
+        <p><strong>مشاهده:</strong> {{ item.finding }}</p>
+        {% if item.synthesis %}<p><strong>جمع قرائن:</strong> {{ item.synthesis }}</p>{% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endmacro %}
+
+{% block content %}
+<div class="shell summary-shell">
+    <article class="sheet summary-report">
+        <header class="summary-heading">
+            <h1>جمع‌بندی زایچه{% if birth %} — {{ birth.name }}{% endif %}</h1>
+        </header>
+        {% if birth %}
+        <table class="info-table" aria-label="مشخصات فرد">
+            <tbody>
+            <tr><td>تولد شمسی</td><td>{{ birth.jalali_date }}</td><td>تولد میلادی</td><td>{{ birth.gregorian_full }}</td></tr>
+            <tr><td>ساعت محلی</td><td>{{ birth.local_time }}</td><td>ساعت UTC</td><td>{{ birth.utc_time }}</td></tr>
+            <tr><td>شهر تولد</td><td>{{ birth.city_name }}</td><td>شهر سالگرد</td><td>{{ birth.solar_city or birth.city_name }}</td></tr>
+            <tr><td>منطقهٔ زمانی</td><td>{{ birth.timezone }}</td><td>مختصات</td><td>{{ birth.lat|dms_lat }} · {{ birth.lon|dms_lon }}</td></tr>
+            </tbody>
+        </table>
+        {% endif %}
+        {% if error %}<p class="ai-error" role="alert">{{ error }}</p>{% endif %}
+        {% if analysis_html %}
+        <div class="ai-analysis summary-analysis">{{ analysis_html | safe }}</div>
+        {% elif report %}
+            {% for key, title in section_titles %}
+                {% if key == 'solar' %}
+                <section aria-labelledby="summaryHouses">
+                    <h2 id="summaryHouses">خانه‌های دوازده‌گانه</h2>
+                    {% for number, items in report.houses.items() %}
+                        <h3>خانهٔ {{ number }}</h3>
+                        {{ entries(items) }}
+                    {% endfor %}
+                </section>
+                {% endif %}
+                <section aria-labelledby="summary-{{ key }}">
+                    <h2 id="summary-{{ key }}">{{ title }}</h2>
+                    {{ entries(report.sections[key]) }}
+                </section>
+            {% endfor %}
+        {% endif %}
+    </article>
+
+    {% if saved_id %}<p class="summary-status" role="status">این جمع‌بندی در آرشیو ذخیره شده است.</p>{% endif %}
+    <div class="action-buttons">
+        {% if draft %}
+        <form action="{{ url_for('save_chart_summary') }}" method="post">
+            <input type="hidden" name="draft" value="{{ draft }}">
+            <button type="submit" class="btn btn-ai">ذخیره</button>
+        </form>
+        {% endif %}
+        {% if report %}<button type="button" class="btn btn-secondary" onclick="window.print()">چاپ گزارش</button>{% endif %}
+        {% if saved_id %}
+        <a href="{{ url_for('calculate_saved_chart', chart_id=saved_id) }}" class="btn btn-secondary">محاسبهٔ دوباره</a>
+        {% elif birth %}
+        <form action="{{ url_for('calculate') }}" method="post">
+            <input type="hidden" name="name" value="{{ birth.name }}">
+            <input type="hidden" name="date" value="{{ birth.jalali_date }}">
+            <input type="hidden" name="time" value="{{ birth.local_time }}">
+            <input type="hidden" name="place" value="{{ birth.city_name }}">
+            <input type="hidden" name="solar_city" value="{{ birth.solar_city or birth.city_name }}">
+            <input type="hidden" name="vision" value="{{ birth.vision or '' }}">
+            <button type="submit" class="btn btn-secondary">محاسبهٔ دوباره</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">صفحهٔ اول</a>
+    </div>
+</div>
+{% endblock %}

@@ -24,20 +24,6 @@ class Config:
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
 
     # Server Configuration
-    HOST = os.getenv('HOST', '0.0.0.0')
+    HOST = os.getenv('HOST', '127.0.0.1')
     PORT = int(os.getenv('PORT', 5000))
 
-    @staticmethod
-    def is_ai_configured():
-        """Return True when an API key is available for AI features."""
-        key = (Config.API_KEY or '').strip()
-        return bool(key) and key.lower() != 'your_api_key_here'
-
-    @staticmethod
-    def validate():
-        """Validate configuration.
-
-        AI features require an API key, but the core Swiss Ephemeris flow works
-        without one. So this never raises — it only reports whether AI is ready.
-        """
-        return Config.is_ai_configured()

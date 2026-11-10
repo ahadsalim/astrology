@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 DATABASE_PATH = "nojoom.db"
 
 
+class StaleBirthChartError(RuntimeError):
+    """A report or edit was based on an earlier version of the saved birth data."""
+
+
 def get_db_connection():
     """Create and return a database connection"""
     conn = sqlite3.connect(DATABASE_PATH)
@@ -25,6 +29,8 @@ def init_database():
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    cursor.execute("BEGIN IMMEDIATE")
+
     # Create cities table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS cities (
@@ -54,14 +60,58 @@ def init_database():
             astro_data TEXT,
             ai_analysis TEXT,
             vision TEXT,
+            solar_city TEXT,
+            summary_key TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ai_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            api_key TEXT NOT NULL,
+            base_url TEXT NOT NULL,
+            model TEXT NOT NULL
+        )
+    """)
+
+    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(birth_charts)")}
+    if "solar_city" not in columns:
+        cursor.execute("ALTER TABLE birth_charts ADD COLUMN solar_city TEXT")
+    if "summary_key" not in columns:
+        cursor.execute("ALTER TABLE birth_charts ADD COLUMN summary_key TEXT")
+    for column in ("revision", "analysis_revision"):
+        if column not in columns:
+            cursor.execute(f"ALTER TABLE birth_charts ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0")
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS birth_charts_summary_key ON birth_charts(summary_key)")
     conn.commit()
     conn.close()
     logger.info("Database initialized successfully")
+
+
+def get_ai_settings():
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT api_key, base_url, model FROM ai_settings WHERE id = 1").fetchone()
+        return dict(row) if row else {}
+    finally:
+        conn.close()
+
+
+def save_ai_settings(api_key, base_url, model):
+    conn = get_db_connection()
+    try:
+        with conn:
+            conn.execute("""
+                INSERT INTO ai_settings (id, api_key, base_url, model) VALUES (1, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    api_key = COALESCE(NULLIF(excluded.api_key, ''), ai_settings.api_key),
+                    base_url = excluded.base_url,
+                    model = excluded.model
+            """, (api_key, base_url, model))
+    finally:
+        conn.close()
 
 
 def populate_cities():
@@ -147,8 +197,12 @@ def save_birth_chart(data):
             name, birth_date_persian, birth_date_gregorian,
             birth_time_local, birth_time_utc, city_name,
             latitude, longitude, timezone,
-            astro_data, ai_analysis, vision
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            astro_data, ai_analysis, vision, solar_city, summary_key
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(summary_key) DO UPDATE SET
+            ai_analysis = excluded.ai_analysis, updated_at = CURRENT_TIMESTAMP
+        WHERE birth_charts.revision = 0 AND NULLIF(TRIM(birth_charts.ai_analysis), '') IS NULL
+            AND excluded.ai_analysis IS NOT NULL
     """, (
         data.get('name'),
         data.get('birth_date_persian'),
@@ -161,10 +215,21 @@ def save_birth_chart(data):
         data.get('timezone'),
         data.get('astro_data'),
         data.get('ai_analysis'),
-        data.get('vision', '')
+        data.get('vision', ''),
+        data.get('solar_city'),
+        data.get('summary_key')
     ))
-    
+
     chart_id = cursor.lastrowid
+    if data.get('summary_key'):
+        row = cursor.execute(
+            "SELECT id, revision FROM birth_charts WHERE summary_key = ?", (data['summary_key'],)
+        ).fetchone()
+        if row['revision'] != 0 and data.get('ai_analysis'):
+            conn.rollback()
+            conn.close()
+            raise StaleBirthChartError()
+        chart_id = row['id']
     conn.commit()
     conn.close()
     
@@ -177,7 +242,7 @@ def get_birth_chart(chart_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM birth_charts WHERE id = ?", (chart_id,))
+    cursor.execute("SELECT *, (revision = analysis_revision AND NULLIF(TRIM(ai_analysis), '') IS NOT NULL) AS has_analysis FROM birth_charts WHERE id = ?", (chart_id,))
     row = cursor.fetchone()
     conn.close()
     
@@ -192,7 +257,8 @@ def get_all_birth_charts(limit=100):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT id, name, birth_date_persian, city_name, created_at
+        SELECT id, name, birth_date_persian, city_name, created_at,
+               (revision = analysis_revision AND NULLIF(TRIM(ai_analysis), '') IS NOT NULL) AS has_analysis
         FROM birth_charts
         ORDER BY created_at DESC
         LIMIT ?
@@ -204,34 +270,56 @@ def get_all_birth_charts(limit=100):
     return charts
 
 
-def update_birth_chart_analysis(chart_id, ai_analysis):
-    """Update AI analysis for a birth chart"""
+def update_birth_chart_analysis(chart_id, ai_analysis, *, revision, only_if_missing=False):
+    """Save a structured report to an existing chart."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        UPDATE birth_charts
-        SET ai_analysis = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-    """, (ai_analysis, chart_id))
-    
-    conn.commit()
-    conn.close()
-    
-    logger.info(f"Updated AI analysis for chart ID: {chart_id}")
+    try:
+        with conn:
+            result = conn.execute("""
+                UPDATE birth_charts
+                SET ai_analysis = ?, analysis_revision = revision, summary_key = COALESCE(summary_key, LOWER(HEX(RANDOMBLOB(16)))),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND revision = ?
+                  AND (NOT ? OR analysis_revision != revision OR NULLIF(TRIM(ai_analysis), '') IS NULL)
+            """, (ai_analysis, chart_id, revision, only_if_missing))
+            if result.rowcount == 0:
+                row = conn.execute("SELECT revision FROM birth_charts WHERE id = ?", (chart_id,)).fetchone()
+                if not row or row['revision'] != revision:
+                    raise StaleBirthChartError()
+    finally:
+        conn.close()
+
+
+def update_birth_details(chart_id, revision, birth):
+    """Apply corrected inputs without attaching an older report to them."""
+    conn = get_db_connection()
+    try:
+        with conn:
+            result = conn.execute("""
+                UPDATE birth_charts
+                SET birth_date_persian = ?, birth_date_gregorian = ?,
+                    birth_time_local = ?, birth_time_utc = ?, city_name = ?,
+                    latitude = ?, longitude = ?, timezone = ?, solar_city = ?,
+                    revision = revision + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND revision = ?
+            """, (birth['jalali_date'], birth['gregorian_full'], birth['local_time'], birth['utc_time'],
+                  birth['city_name'], birth['lat'], birth['lon'], birth['timezone'], birth['solar_city'],
+                  chart_id, revision))
+            if result.rowcount == 0:
+                raise StaleBirthChartError()
+    finally:
+        conn.close()
 
 
 def delete_birth_chart(chart_id):
-    """Delete a birth chart"""
+    """Delete the saved birth data and analysis in the same row."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("DELETE FROM birth_charts WHERE id = ?", (chart_id,))
-    
-    conn.commit()
-    conn.close()
-    
-    logger.info(f"Deleted birth chart ID: {chart_id}")
+    try:
+        with conn:
+            result = conn.execute("DELETE FROM birth_charts WHERE id = ?", (chart_id,))
+        return result.rowcount > 0
+    finally:
+        conn.close()
 
 
 # ============================================================================

@@ -1,5 +1,10 @@
+import json
 import logging
-from flask import Flask, render_template, request, jsonify
+import secrets
+from urllib.parse import urlsplit
+
+from flask import Flask, render_template, request, jsonify, redirect, url_for, abort, make_response, session, flash
+from itsdangerous import BadData, URLSafeTimedSerializer
 from config import Config
 from utils import InputValidator, ValidationError, AstroCalculator
 from utils.geo_format import format_latitude, format_longitude, format_coordinates, format_arc_dms
@@ -9,9 +14,13 @@ from core.interpretation_guide import (
     render_interpretation_guide_for_prompt,
 )
 from services import AIService, AIConfigError, format_analysis_html
+from services.chart_summary import SUMMARY_SECTIONS, generate_chart_summary
 from prompts import ASTRO_PROMPT, TRANSIT_PROMPT, prompt_when, safe_prompt_value
 from data import get_all_cities
-from database import save_birth_chart, get_birth_chart, get_all_birth_charts
+from database import (
+    save_birth_chart, get_birth_chart, get_all_birth_charts, save_ai_settings, update_birth_chart_analysis,
+    delete_birth_chart, update_birth_details, StaleBirthChartError,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -24,15 +33,19 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# AI features require an API key, but the core Swiss Ephemeris flow does not.
-# So we never abort startup — we only report whether AI is ready.
-if Config.is_ai_configured():
-    logger.info(f"AI enabled (base_url={Config.API_URL}, model={Config.ASTRO_MODEL})")
-else:
-    logger.warning("AI disabled: no API_KEY set. Core astrology features remain available.")
-
 # Initialize services
 ai_service = AIService()
+# The public development key must not sign user data.
+summary_secret = app.config["SECRET_KEY"]
+if not summary_secret or summary_secret == 'change-me-in-production':
+    summary_secret = secrets.token_hex(32)
+app.secret_key = summary_secret
+summary_chart_signer = URLSafeTimedSerializer(summary_secret, salt='summary-chart-v1')
+summary_draft_signer = URLSafeTimedSerializer(summary_secret, salt='summary-draft-v1')
+archive_summary_signer = URLSafeTimedSerializer(summary_secret, salt='archive-summary-v1')
+archive_delete_signer = URLSafeTimedSerializer(summary_secret, salt='archive-delete-v1')
+archive_edit_signer = URLSafeTimedSerializer(summary_secret, salt='archive-edit-v1')
+SUMMARY_MAX_AGE = 8 * 60 * 60
 
 
 @app.context_processor
@@ -86,83 +99,124 @@ def index():
     return render_template("index.html", swiss=swiss_available, cities=cities)
 
 
-@app.route("/calculate", methods=["POST"])
-def calculate():
-    """Calculate Swiss Ephemeris data and show results"""
+_LOCAL_SETTINGS_HOSTS = {'127.0.0.1', 'localhost', '::1'}
+
+
+def _valid_api_url(value):
     try:
-        # Get form data
-        name = request.form.get("name", "").strip()
-        date = request.form.get("date", "").strip()
-        time = request.form.get("time", "").strip()
-        place = request.form.get("place", "").strip()
-        solar_city = request.form.get("solar_city", "").strip()
-        vision = request.form.get("vision", "").strip()
-        use_swiss = request.form.get("swiss_ephemeris", "no") == "yes"
-        
-        # Validate inputs
-        try:
-            validated = InputValidator.validate_all(name, date, time, place, vision)
-        except ValidationError as e:
-            logger.warning(f"Validation error: {e}")
-            return render_template("error.html", error=str(e))
-        
-        # Always calculate astronomical data with Swiss Ephemeris
-        astro_html = None
-        birth_data_info = None
-        chart_data_raw = None
-        
-        if not AstroCalculator.is_available():
-            return render_template("error.html", error="Swiss Ephemeris در دسترس نیست. لطفاً کتابخانه‌های مورد نیاز را نصب کنید.")
-        
-        try:
-            logger.info("Calculating chart with Swiss Ephemeris")
-            birth_data = AstroCalculator.prepare_birth_data(
-                validated['date'],
-                validated['time'],
-                validated['place']
-            )
-            # Add person info to birth_data for HTML output
-            birth_data['name'] = validated['name']
-            birth_data['vision'] = validated['vision']
-            birth_data['jalali_date'] = validated['date']
-            birth_data['local_time'] = validated['time']
-            birth_data['solar_city'] = solar_city if solar_city else place  # Use birth city if not specified
-            
-            result = AstroCalculator.calculate_chart(birth_data)
-            astro_html = result['html']  # HTML with chart image for display
-            astro_html_for_ai = result['html_for_ai']  # HTML without chart image for AI
-            chart_data_raw = result['chart_data']
-            birth_data_info = birth_data
-            if chart_data_raw:
-                birth_data_info['is_diurnal'] = chart_data_raw.get('is_diurnal', True)
-                birth_data_info['sect_fa'] = chart_data_raw.get('sect_fa', '')
-                asc = chart_data_raw.get('houses', {}).get('ascendant', {})
-                birth_data_info['asc_sign_fa'] = asc.get('sign_fa', '')
-                birth_data_info['asc_sign_symbol'] = get_sign_symbol(asc.get('sign_fa', ''))
-            logger.info("Chart calculation successful")
-        except Exception as e:
-            logger.error(f"Swiss Ephemeris calculation failed: {e}")
-            return render_template("error.html", error=f"خطا در محاسبات نجومی: {str(e)}")
-        
-        # Show calculation results
-        return render_template(
-            "calculation.html",
-            name=validated['name'],
-            date=validated['date'],
-            time=validated['time'],
-            place=validated['place'],
-            solar_city=solar_city,
-            vision=validated['vision'],
-            use_swiss=use_swiss,
-            astro_data=astro_html,  # HTML with chart image for display
-            astro_data_for_ai=astro_html_for_ai,  # Plain text chart data for view-prompt
-            birth_data=birth_data_info,
-            interpretation_guide=render_interpretation_guide_html(),
+        parts = urlsplit(value)
+        _ = parts.port
+        return bool(
+            parts.hostname
+            and (parts.scheme == 'https' or (parts.scheme == 'http' and parts.hostname in _LOCAL_SETTINGS_HOSTS))
+            and parts.username is None and parts.password is None
+            and not parts.query and not parts.fragment
+            and not any(char.isspace() or ord(char) < 32 for char in value)
+            and chr(92) not in value
         )
-        
-    except Exception as e:
-        logger.error(f"Unexpected error in calculate: {e}")
-        return render_template("error.html", error="خطای غیرمنتظره رخ داد. لطفاً دوباره تلاش کنید.")
+    except ValueError:
+        return False
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    try:
+        local_host = urlsplit(f"//{request.host}").hostname in _LOCAL_SETTINGS_HOSTS
+    except ValueError:
+        local_host = False
+    if not local_host or request.remote_addr not in {'127.0.0.1', '::1'}:
+        abort(403)
+
+    active = AIService.settings()
+    csrf_token = session.get('settings_csrf')
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+        session['settings_csrf'] = csrf_token
+    base_url, model = active['base_url'], active['model']
+    error, status = None, 200
+    if request.method == "POST":
+        if not secrets.compare_digest(request.form.get('csrf_token', '').encode(), csrf_token.encode()):
+            abort(403)
+        base_url = request.form.get('base_url', '').strip()
+        model = request.form.get('model', '').strip()
+        api_key = request.form.get('api_key', '').strip()
+        if len(base_url) > 2048 or not _valid_api_url(base_url):
+            error = 'آدرس پایهٔ سرویس را با HTTPS وارد کنید. برای سرویس روی همین دستگاه HTTP هم پذیرفته می‌شود.'
+        elif not model or len(model) > 200 or any(char.isspace() for char in model):
+            error = 'شناسهٔ مدل را بدون فاصله وارد کنید.'
+        elif len(api_key) > 2048 or any(char.isspace() or ord(char) < 33 or ord(char) > 126 for char in api_key) or api_key.lower() == 'your_api_key_here':
+            error = 'کلید API را با حروف و نشانه‌های انگلیسی و بدون فاصله وارد کنید.'
+        elif not api_key and not active['api_key']:
+            error = 'کلید API را وارد کنید.'
+        if error is None:
+            save_ai_settings(api_key, base_url.rstrip('/'), model)
+            return redirect(url_for('settings', saved=1), code=303)
+        status = 400
+
+    response = make_response(render_template(
+        'settings.html', base_url=base_url, model=model, has_key=bool(active['api_key']),
+        csrf_token=csrf_token, error=error, saved=request.args.get('saved') == '1',
+    ), status)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+def _calculate_natal(name, date, time, place, solar_city, vision, *, saved=None):
+    if not AstroCalculator.is_available():
+        raise RuntimeError("Swiss Ephemeris در دسترس نیست.")
+    coordinates = (saved['latitude'], saved['longitude']) if saved else None
+    birth = AstroCalculator.prepare_birth_data(date, time, place, coordinates=coordinates)
+    birth.update(name=name, vision=vision, jalali_date=date, local_time=time, solar_city=solar_city or place)
+    result = AstroCalculator.calculate_chart(birth)
+    natal = result['chart_data']
+    asc = natal.get('houses', {}).get('ascendant', {})
+    birth.update(
+        is_diurnal=natal.get('is_diurnal', True),
+        sect_fa=natal.get('sect_fa', ''),
+        asc_sign_fa=asc.get('sign_fa', ''),
+        asc_sign_symbol=get_sign_symbol(asc.get('sign_fa', '')),
+    )
+    return {
+        'birth': birth, 'natal': natal, 'solar': result['solar_return_data'],
+        'id': (saved['summary_key'] if saved else None) or secrets.token_hex(16),
+        'chart_id': saved['id'] if saved else None,
+        'revision': saved['revision'] if saved else 0,
+    }, result['html']
+
+
+def _calculate_saved_natal(saved):
+    return _calculate_natal(
+        saved['name'], saved['birth_date_persian'], saved['birth_time_local'], saved['city_name'],
+        saved['solar_city'], saved['vision'] or '', saved=saved,
+    )
+
+
+def _render_calculation(chart, astro_html, *, saved=False):
+    birth = chart['birth']
+    return render_template(
+        'calculation.html', name=birth['name'], astro_data=astro_html, birth_data=birth,
+        interpretation_guide=render_interpretation_guide_html(),
+        summary_snapshot=summary_chart_signer.dumps(chart), saved=saved,
+    )
+
+
+@app.post("/calculate")
+def calculate():
+    """Calculate Swiss Ephemeris data and show results."""
+    try:
+        validated = InputValidator.validate_all(
+            *(request.form.get(field, '').strip() for field in ('name', 'date', 'time', 'place', 'vision'))
+        )
+        chart, html = _calculate_natal(
+            validated['name'], validated['date'], validated['time'], validated['place'],
+            request.form.get('solar_city', '').strip(), validated['vision'],
+        )
+        return _render_calculation(chart, html)
+    except ValidationError as exc:
+        return render_template('error.html', error=str(exc))
+    except Exception:
+        logger.exception('Swiss Ephemeris calculation failed')
+        return render_template('error.html', error='خطا در محاسبهٔ زایچه.'), 500
 
 
 @app.route("/calculate-transit", methods=["POST"])
@@ -299,6 +353,96 @@ def view_transit_prompt():
         return f"خطا در نمایش پرامپت ترانزیت: {str(e)}", 500
 
 
+def _save_birth(birth, record_key, report=None):
+    return save_birth_chart({
+        'name': birth['name'],
+        'birth_date_persian': birth['jalali_date'],
+        'birth_date_gregorian': birth['gregorian_full'],
+        'birth_time_local': birth['local_time'],
+        'birth_time_utc': birth['utc_time'],
+        'city_name': birth['city_name'],
+        'latitude': birth['lat'],
+        'longitude': birth['lon'],
+        'timezone': birth['timezone'],
+        'solar_city': birth.get('solar_city'),
+        'vision': birth.get('vision', ''),
+        'ai_analysis': json.dumps(report, ensure_ascii=False) if report else None,
+        'summary_key': record_key,
+    })
+
+
+@app.post("/chart/save-birth")
+def save_birth():
+    try:
+        chart = summary_chart_signer.loads(request.form.get('chart', ''), max_age=SUMMARY_MAX_AGE)
+    except BadData:
+        return _render_summary(error='اطلاعات صفحه معتبر نیست یا منقضی شده است. زایچه را دوباره محاسبه کنید.'), 400
+    try:
+        chart_id = chart.get('chart_id') or _save_birth(chart['birth'], chart['id'])
+    except Exception:
+        logger.exception('Could not save birth details')
+        return render_template('error.html', error='ذخیرهٔ اطلاعات تولد ناموفق بود.'), 500
+    return redirect(url_for('calculate_saved_chart', chart_id=chart_id, saved=1), code=303)
+
+
+def _render_summary(birth=None, report=None, draft=None, saved_id=None, error=None):
+    return render_template(
+        'chart_summary.html', birth=birth, report=report, draft=draft,
+        saved_id=saved_id, error=error, section_titles=SUMMARY_SECTIONS,
+        analysis_html=format_analysis_html(report.get('analysis')) if report else '',
+    )
+
+
+@app.post("/summary")
+def summarize_chart():
+    try:
+        chart = summary_chart_signer.loads(request.form.get('chart', ''), max_age=SUMMARY_MAX_AGE)
+    except BadData:
+        return _render_summary(error='اطلاعات صفحه معتبر نیست یا منقضی شده است. زایچه را دوباره محاسبه کنید.'), 400
+
+    birth = chart['birth']
+    if not AIService.is_configured():
+        return _render_summary(birth=birth, error='برای تهیهٔ جمع‌بندی، کلید API را در منوی تنظیمات وارد کنید.'), 503
+    try:
+        report = generate_chart_summary(ai_service, chart)
+        draft = summary_draft_signer.dumps({
+            'id': chart.get('id') or secrets.token_hex(16), 'chart_id': chart.get('chart_id'),
+            'birth': birth, 'report': report, 'revision': chart.get('revision', 0),
+        })
+        return _render_summary(birth=birth, report=report, draft=draft)
+    except AIConfigError:
+        return _render_summary(birth=birth, error='کلید سرویس هوش مصنوعی تنظیم نشده است.'), 503
+    except Exception:
+        logger.exception('Could not generate a chart summary')
+        return _render_summary(birth=birth, error='دریافت جمع‌بندی معتبر از مدل ناموفق بود. دوباره تلاش کنید.'), 502
+
+
+@app.post("/summary/save")
+def save_chart_summary():
+    token = request.form.get('draft', '')
+    try:
+        draft = summary_draft_signer.loads(token, max_age=SUMMARY_MAX_AGE)
+    except BadData:
+        return _render_summary(error='پیش‌نویس معتبر نیست یا منقضی شده است. جمع‌بندی را دوباره تهیه کنید.'), 400
+
+    birth = draft['birth']
+    try:
+        chart_id = draft.get('chart_id')
+        if chart_id:
+            update_birth_chart_analysis(
+                chart_id, json.dumps(draft['report'], ensure_ascii=False), revision=draft.get('revision', 0),
+            )
+        else:
+            chart_id = _save_birth(birth, draft['id'], draft['report'])
+    except StaleBirthChartError:
+        return _render_summary(error='مشخصات زایچه تغییر کرده است. جمع‌بندی تازه را از فهرست زایچه‌ها تهیه کنید.'), 409
+    except Exception:
+        logger.exception('Could not save a chart summary')
+        return _render_summary(birth=birth, report=draft['report'], draft=token,
+                               error='ذخیرهٔ جمع‌بندی ناموفق بود. دوباره تلاش کنید.'), 500
+    return redirect(url_for('view_chart', chart_id=chart_id), code=303)
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """Send birth-chart data to the AI and return the rendered analysis (JSON)."""
@@ -316,7 +460,7 @@ def analyze():
         return jsonify({
             "success": False,
             "code": "no_api_key",
-            "error": "کلید هوش مصنوعی تنظیم نشده است. یک کلید رایگان از Agnes بگیرید و در API_KEY قرار دهید.",
+            "error": "کلید API را در منوی تنظیمات وارد کنید.",
         })
 
     try:
@@ -352,7 +496,7 @@ def analyze_transit():
         return jsonify({
             "success": False,
             "code": "no_api_key",
-            "error": "کلید هوش مصنوعی تنظیم نشده است. یک کلید رایگان از Agnes بگیرید و در API_KEY قرار دهید.",
+            "error": "کلید API را در منوی تنظیمات وارد کنید.",
         })
 
     try:
@@ -375,8 +519,6 @@ def analyze_transit():
 def save():
     """Save birth chart to database"""
     try:
-        import json
-        
         # Get data from form
         name = request.form.get("name", "").strip()
         date = request.form.get("date", "").strip()
@@ -431,10 +573,116 @@ def charts():
     """View all saved charts"""
     try:
         all_charts = get_all_birth_charts()
-        return render_template("charts.html", charts=all_charts)
+        return render_template(
+            'charts.html', charts=all_charts, sign_archive_summary=archive_summary_signer.dumps,
+            sign_archive_delete=archive_delete_signer.dumps,
+        )
     except Exception as e:
         logger.error(f"Error loading charts: {e}")
         return render_template("error.html", error="خطا در بارگذاری زایچه‌ها")
+
+
+@app.route("/chart/<int:chart_id>/edit", methods=["GET", "POST"])
+def edit_saved_chart(chart_id):
+    saved = get_birth_chart(chart_id)
+    if not saved:
+        abort(404)
+    date, time, place = (saved[key] for key in ('birth_date_persian', 'birth_time_local', 'city_name'))
+    revision = saved['revision']
+    error, status = None, 200
+    if request.method == "POST":
+        try:
+            version = archive_edit_signer.loads(request.form.get('version', ''), max_age=SUMMARY_MAX_AGE)
+        except BadData:
+            version = None
+        if version != [chart_id, revision]:
+            return render_template('error.html', error='پرونده را دوباره باز کنید و ویرایش را انجام دهید.'), 409
+        date, time, place = (request.form.get(field, '').strip() for field in ('date', 'time', 'place'))
+        try:
+            date = InputValidator.validate_persian_date(date)
+            time = InputValidator.validate_time(time)
+            same_city = place == saved['city_name']
+            if not same_city:
+                place = InputValidator.validate_place(place)
+            if (date, time, place) != (saved['birth_date_persian'], saved['birth_time_local'], saved['city_name']):
+                coordinates = (saved['latitude'], saved['longitude']) if same_city else None
+                birth = AstroCalculator.prepare_birth_data(date, time, place, coordinates=coordinates)
+                solar_city = saved['solar_city']
+                birth.update(jalali_date=date, solar_city=solar_city if solar_city and solar_city != saved['city_name'] else place)
+                update_birth_details(chart_id, revision, birth)
+                flash('مشخصات تولد اصلاح شد.', 'chart-edited')
+            return redirect(url_for('charts'), code=303)
+        except ValidationError as exc:
+            error, status = str(exc), 400
+        except StaleBirthChartError:
+            return render_template('error.html', error='پرونده تغییر کرده است. دوباره آن را برای ویرایش باز کنید.'), 409
+        except Exception:
+            logger.exception('Could not edit chart %s', chart_id)
+            error, status = 'ذخیرهٔ تغییرات ناموفق بود.', 500
+
+    cities = sorted(set(get_all_cities()) | {saved['city_name']})
+    return render_template(
+        'edit_chart.html', chart=saved, cities=cities, date=date, time=time, place=place,
+        version=archive_edit_signer.dumps([chart_id, revision]), error=error,
+    ), status
+
+
+@app.post("/chart/<int:chart_id>/delete")
+def remove_saved_chart(chart_id):
+    try:
+        signed_id = archive_delete_signer.loads(request.form.get('chart', ''), max_age=SUMMARY_MAX_AGE)
+    except BadData:
+        signed_id = None
+    if signed_id != chart_id:
+        return render_template('error.html', error='فهرست زایچه‌ها را دوباره باز کنید و حذف را تأیید کنید.'), 400
+    if delete_birth_chart(chart_id):
+        flash('زایچه حذف شد.', 'chart-deleted')
+    return redirect(url_for('charts'), code=303)
+
+
+@app.get("/chart/<int:chart_id>/calculate")
+def calculate_saved_chart(chart_id):
+    saved = get_birth_chart(chart_id)
+    if not saved:
+        abort(404)
+    try:
+        chart, html = _calculate_saved_natal(saved)
+        return _render_calculation(chart, html, saved=request.args.get('saved') == '1')
+    except Exception:
+        logger.exception('Could not recalculate saved chart %s', chart_id)
+        return render_template('error.html', error='محاسبهٔ زایچهٔ ذخیره‌شده ناموفق بود.'), 500
+
+
+@app.post("/chart/<int:chart_id>/summary")
+def summarize_saved_chart(chart_id):
+    try:
+        signed_id = archive_summary_signer.loads(request.form.get('chart', ''), max_age=SUMMARY_MAX_AGE)
+    except BadData:
+        signed_id = None
+    if signed_id != chart_id:
+        return _render_summary(error='فهرست را دوباره باز کنید و «جمع‌بندی» را بزنید.'), 400
+
+    saved = get_birth_chart(chart_id)
+    if not saved:
+        abort(404)
+    if saved['has_analysis']:
+        return redirect(url_for('view_chart', chart_id=chart_id), code=303)
+    if not AIService.is_configured():
+        return _render_summary(error='برای تهیهٔ جمع‌بندی، کلید API را در منوی تنظیمات وارد کنید.'), 503
+    try:
+        chart, _ = _calculate_saved_natal(saved)
+        report = generate_chart_summary(ai_service, chart)
+        update_birth_chart_analysis(
+            chart_id, json.dumps(report, ensure_ascii=False), revision=saved['revision'], only_if_missing=True,
+        )
+    except StaleBirthChartError:
+        return _render_summary(error='مشخصات زایچه تغییر کرده است. دوباره از فهرست زایچه‌ها جمع‌بندی بگیرید.'), 409
+    except AIConfigError:
+        return _render_summary(error='کلید سرویس هوش مصنوعی تنظیم نشده است.'), 503
+    except Exception:
+        logger.exception('Could not generate or save the analysis for chart %s', chart_id)
+        return _render_summary(error='تهیه یا ذخیرهٔ جمع‌بندی ناموفق بود. دوباره تلاش کنید.'), 502
+    return redirect(url_for('view_chart', chart_id=chart_id), code=303)
 
 
 @app.route("/chart/<int:chart_id>")
@@ -444,6 +692,17 @@ def view_chart(chart_id):
         chart = get_birth_chart(chart_id)
         if not chart:
             return render_template("error.html", error="زایچه یافت نشد")
+        if not chart['has_analysis']:
+            return redirect(url_for('calculate_saved_chart', chart_id=chart_id))
+        if chart.get('summary_key'):
+            birth = {
+                'name': chart['name'], 'jalali_date': chart['birth_date_persian'],
+                'gregorian_full': chart['birth_date_gregorian'], 'local_time': chart['birth_time_local'],
+                'utc_time': chart['birth_time_utc'], 'city_name': chart['city_name'],
+                'lat': chart['latitude'], 'lon': chart['longitude'], 'timezone': chart['timezone'],
+                'solar_city': chart['solar_city'], 'vision': chart['vision'],
+            }
+            return _render_summary(birth=birth, report=json.loads(chart['ai_analysis']), saved_id=chart_id)
         return render_template("view_chart.html", chart=chart)
     except Exception as e:
         logger.error(f"Error loading chart: {e}")

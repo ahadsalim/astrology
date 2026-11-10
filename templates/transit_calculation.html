@@ -48,7 +48,7 @@
 
     <div class="btn-group">
         <button type="button" class="btn btn-ai" id="aiAnalyzeBtn" onclick="runAnalysis()">
-            <span class="btn-text">✨ تحلیل ترانزیت با هوش مصنوعی (Agnes)</span>
+            <span class="btn-text">✨ تحلیل ترانزیت با هوش مصنوعی</span>
             <span class="btn-loading hidden"><span class="spinner"></span> در حال تحلیل…</span>
         </button>
         <button type="button" onclick="viewTransitPrompt()" class="btn btn-transit">📋 پرامپت ترانزیت (کپی دستی)</button>
@@ -56,7 +56,7 @@
     </div>
 
     <div id="aiPanel" class="ai-panel hidden">
-        <div class="ai-panel__head">🔮 تحلیل ترانزیت با هوش مصنوعی <span class="badge">Agnes AI</span></div>
+        <div class="ai-panel__head">🔮 تحلیل ترانزیت با هوش مصنوعی</div>
         <div class="ai-panel__body" id="aiPanelBody"></div>
     </div>
 </div>
@@ -82,7 +82,7 @@
         btn.disabled = true;
         btn.querySelector('.btn-text').classList.add('hidden');
         btn.querySelector('.btn-loading').classList.remove('hidden');
-        body.innerHTML = '<div class="ai-loading"><div class="ai-orbit"></div><div>در حال تحلیل ترانزیت با هوش مصنوعی Agnes…<br><small>این کار ممکن است چند لحظه طول بکشد.</small></div></div>';
+        body.innerHTML = '<div class="ai-loading"><div class="ai-orbit"></div><div>در حال تحلیل ترانزیت با هوش مصنوعی…<br><small>این کار ممکن است چند لحظه طول بکشد.</small></div></div>';
         panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         var fd = new URLSearchParams();
@@ -105,7 +105,7 @@
                 } else {
                     var extra = '';
                     if (data.code === 'no_api_key') {
-                        extra = '<p style="margin-top:10px">یک کلید رایگان از <a href="https://platform.agnes-ai.com/" target="_blank" style="color:#ffcf5c">Agnes AI</a> بگیرید و در <code>API_KEY</code> قرار دهید.</p>';
+                        extra = '<p><a href="{{ url_for('settings') }}">باز کردن تنظیمات</a></p>';
                     }
                     body.innerHTML = '<div class="ai-error">⚠️ ' + (data.error || 'خطای نامشخص') + extra + '</div>';
                 }

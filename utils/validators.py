@@ -61,12 +61,14 @@ class InputValidator:
     
     @staticmethod
     def validate_time(time_str):
-        """Validate time format (HH:MM)"""
+        """Validate and normalize HH:MM or compact HHMM."""
         if not time_str:
             raise ValidationError("ساعت نمی‌تواند خالی باشد")
         
-        if not re.match(r'^\d{1,2}:\d{2}$', time_str):
-            raise ValidationError("فرمت ساعت نامعتبر است. مثال: 14:30")
+        if re.fullmatch(r'\d{3,4}', time_str):
+            time_str = f"{time_str[:-2]}:{time_str[-2:]}"
+        if not re.fullmatch(r'\d{1,2}:\d{2}', time_str):
+            raise ValidationError("فرمت ساعت نامعتبر است. مثال: 1430 یا 14:30")
         
         try:
             hour, minute = map(int, time_str.split(':'))

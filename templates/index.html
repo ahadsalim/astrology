@@ -1,24 +1,18 @@
 {% extends "base.html" %}
 {% set nav = 'home' %}
-{% block title %}نجوم اطلس — تحلیل زایچه تولد{% endblock %}
+{% block title %}نجوم احکامی — سامانه تحلیل زایچه تولد{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="hero">
-        <div class="hero__logo">🌙</div>
-        <h1>سامانه تحلیل زایچه تولد</h1>
-        <p class="subtitle">تحلیل دقیق و جامع نجومی بر پایهٔ نجوم احکامی ایرانی-اسلامی و هوش مصنوعی</p>
-    </div>
-
-    <div class="card mt-2">
-        <div class="info-box">
-            <strong>ℹ️ راهنما</strong>
+    <div class="card">
+        <details class="info-box">
+            <summary><strong>ℹ️ راهنما</strong></summary>
             <ul>
                 <li>تاریخ <strong>شمسی</strong> را از لیست انتخاب کنید</li>
-                <li>ساعت را به <strong>وقت محلی ایران</strong> وارد کنید (مثال: 14:30)</li>
+                <li>ساعت را به <strong>وقت محلی ایران</strong> وارد کنید. برای مثال، ۱۴۳۰ به ۱۴:۳۰ تبدیل می‌شود.</li>
                 <li>شهر محل تولد را از لیست انتخاب کنید</li>
             </ul>
-        </div>
+        </details>
 
         <form action="/calculate" method="post" id="birthForm" class="birth-form" onsubmit="return handleSubmit(event)">
             <input type="hidden" name="swiss_ephemeris" value="yes">
@@ -45,7 +39,10 @@
             <div class="form-row">
                 <label for="time">🕐 ساعت تولد</label>
                 <div class="field-wrap">
-                    <input type="text" name="time" id="time" placeholder="14:30" value="12:00" required pattern="\d{1,2}:\d{2}">
+                    <input type="text" name="time" id="time" dir="ltr" inputmode="numeric"
+                           placeholder="1430" value="12:00" required autocomplete="off"
+                           pattern="(?:[01]?[0-9]|2[0-3]):?[0-5][0-9]"
+                           title="ساعت و دقیقه را پشت‌سرهم وارد کنید، مثل 1430">
                 </div>
             </div>
 
@@ -72,13 +69,6 @@
                 </div>
             </div>
 
-            <div class="form-row form-row--textarea">
-                <label for="vision">💼 دغدغه</label>
-                <div class="field-wrap">
-                    <textarea name="vision" id="vision" rows="2" placeholder="اختیاری — مثال: وضعیت شغلی یا مالی" maxlength="500"></textarea>
-                </div>
-            </div>
-
             <div class="form-actions-dual">
                 <button type="submit" formaction="/calculate" class="btn btn-primary btn-primary--compact" id="submitChartBtn">
                     <span class="btn-text">🔮 محاسبه زایچه</span>
@@ -91,10 +81,6 @@
             </div>
         </form>
     </div>
-
-    <p class="text-center mt-2">
-        <span class="chip">✨ تحلیل هوشمند با {{ 'Agnes AI فعال' if ai_enabled else 'Agnes AI (کلید API لازم است)' }}</span>
-    </p>
 </div>
 {% endblock %}
 
@@ -158,7 +144,30 @@
         document.getElementById('date-day').addEventListener('change', syncHiddenDate);
         syncHiddenDate();
     }
+    const birthTime = document.getElementById('time');
+    function formatBirthTime(finish = false) {
+        const original = birthTime.value;
+        let value = original
+            .replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))
+            .replace(/[٠-٩]/g, digit => '٠١٢٣٤٥٦٧٨٩'.indexOf(digit));
+        if (/^[0-9]{4}$/.test(value) || (finish && /^[0-9]{3}$/.test(value))) {
+            value = value.padStart(4, '0');
+            value = value.slice(0, 2) + ':' + value.slice(2);
+        }
+        if (finish && /^[0-9]:[0-9]{2}$/.test(value)) {
+            value = '0' + value;
+        }
+        if (value !== original) {
+            const caret = birthTime.selectionStart + value.length - original.length;
+            birthTime.value = value;
+            birthTime.setSelectionRange(caret, caret);
+        }
+    }
+    birthTime.addEventListener('input', () => formatBirthTime());
+    birthTime.addEventListener('blur', () => formatBirthTime(true));
+
     function handleSubmit(event) {
+        formatBirthTime(true);
         syncHiddenDate();
         const btn = event.submitter || document.getElementById('submitChartBtn');
         event.target.querySelectorAll('button[type="submit"]').forEach(function(b) {

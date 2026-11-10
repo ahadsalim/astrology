@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set nav = 'charts' %}
+{% block title %}ویرایش زایچه — {{ chart.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="card">
+        <header class="section-head"><h1>ویرایش زایچهٔ {{ chart.name }}</h1></header>
+        {% if error %}<p class="ai-error" role="alert">{{ error }}</p>{% endif %}
+        {% if chart.has_analysis %}
+        <p class="info-box">اگر مشخصات تولد را تغییر دهید، برای اطلاعات تازه باید دوباره جمع‌بندی بگیرید.</p>
+        {% endif %}
+        <form class="settings-form" method="post" action="{{ url_for('edit_saved_chart', chart_id=chart.id) }}">
+            <input type="hidden" name="version" value="{{ version }}">
+            <div>
+                <label for="edit-date">تاریخ تولد (شمسی)</label>
+                <input type="text" id="edit-date" name="date" dir="ltr" value="{{ date }}" placeholder="1370-01-01" maxlength="10" required>
+            </div>
+            <div>
+                <label for="edit-time">ساعت تولد</label>
+                <input type="text" id="edit-time" name="time" dir="ltr" inputmode="numeric" value="{{ time }}" placeholder="1430" maxlength="5" required>
+            </div>
+            <div>
+                <label for="edit-place">شهر تولد</label>
+                <select id="edit-place" name="place" required>
+                    {% for city in cities %}
+                    <option value="{{ city }}"{% if city == place %} selected{% endif %}>{{ city }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="chart-list-actions">
+                <button type="submit" class="btn btn-primary btn-primary--compact">ذخیرهٔ تغییرات</button>
+                <a href="{{ url_for('charts') }}" class="btn btn-secondary">انصراف</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

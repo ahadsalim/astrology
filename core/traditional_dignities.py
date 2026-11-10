@@ -12,6 +12,7 @@ exact division degree belongs to the next bound (e.g. 25.00° Aquarius = Saturn)
 For night charts, Mercury and Saturn are exchanged (per Astrodienst note).
 """
 
+from html import escape
 from typing import Dict, List, Tuple
 
 # Dorothean triplicity by element (day / night / participating)
@@ -219,6 +220,15 @@ DIGNITY_FA = {
     'exaltation_degree': 'درجه شرف',
 }
 
+DIGNITY_SYMBOLS = {
+    'fall_degree': '▼°',
+    'detriment': '×',
+    'fall_sign': '▽',
+    'exaltation_sign': '△',
+    'rulership': '◆',
+    'exaltation_degree': '▲°',
+}
+
 # Weakest (1) → strongest (6); background / text for table cells and legend.
 DIGNITY_SPECTRUM = {
     'fall_degree': ('#4a0e0e', '#ffffff'),
@@ -274,15 +284,17 @@ def get_dignity_fa(dignity: str | None) -> str:
 
 
 def format_dignity_cell_html(dignity: str | None, dignity_fa: str = '') -> str:
-    """Essential-dignity table cell with spectrum coloring."""
+    """Essential-dignity glyph with the existing spectrum coloring."""
     if not dignity:
-        return '<td class="dignity-cell">-</td>'
-    label = dignity_fa or get_dignity_fa(dignity)
+        return '<td class="dignity-cell compact-symbol-column">-</td>'
+    label = escape(dignity_fa or get_dignity_fa(dignity))
     colors = DIGNITY_SPECTRUM.get(dignity)
     if not colors:
-        return f'<td class="dignity-cell">{label}</td>'
+        return f'<td class="dignity-cell compact-symbol-column">{label}</td>'
     bg, fg = colors
     return (
-        f'<td class="dignity-cell dignity--{dignity}" '
-        f'style="background:{bg} !important;color:{fg};font-weight:700;">{label}</td>'
+        f'<td class="dignity-cell dignity--{dignity} compact-symbol-column" '
+        f'style="background:{bg} !important;color:{fg};font-weight:700;">'
+        f'<bdi dir="ltr" class="table-glyph" role="img" aria-label="{label}" title="{label}">'
+        f'{DIGNITY_SYMBOLS[dignity]}</bdi></td>'
     )

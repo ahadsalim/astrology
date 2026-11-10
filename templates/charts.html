@@ -10,13 +10,17 @@
         <p class="subtitle">فهرست تمام زایچه‌های محاسبه و ذخیره‌شده</p>
     </div>
 
+    {% for message in get_flashed_messages(category_filter=['chart-deleted', 'chart-edited']) %}
+    <p class="summary-status text-center" role="status">{{ message }}</p>
+    {% endfor %}
+
     <div class="card mt-2">
         {% if charts and charts|length > 0 %}
         <div style="overflow-x:auto;">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>شناسه</th><th>نام</th><th>تاریخ تولد</th><th>شهر</th><th>تاریخ ذخیره</th><th>عملیات</th>
+                        <th>شناسه</th><th>نام</th><th>تاریخ تولد</th><th>شهر تولد</th><th>تاریخ ذخیره</th><th>عملیات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,7 +31,24 @@
                         <td>{{ chart.birth_date_persian }}</td>
                         <td>{{ chart.city_name }}</td>
                         <td>{{ chart.created_at[:16] }}</td>
-                        <td><a href="/chart/{{ chart.id }}" class="btn btn-primary btn-sm" style="width:auto">👁️ مشاهده</a></td>
+                        <td>
+                            <div class="chart-list-actions">
+                                <a href="{{ url_for('calculate_saved_chart', chart_id=chart.id) }}" class="btn btn-secondary btn-sm">محاسبه</a>
+                                {% if chart.has_analysis %}
+                                <a href="{{ url_for('view_chart', chart_id=chart.id) }}" class="btn btn-primary btn-primary--compact btn-sm">مشاهده</a>
+                                {% else %}
+                                <form method="post" action="{{ url_for('summarize_saved_chart', chart_id=chart.id) }}">
+                                    <input type="hidden" name="chart" value="{{ sign_archive_summary(chart.id) }}">
+                                    <button type="submit" class="btn btn-ai btn-sm">جمع‌بندی</button>
+                                </form>
+                                {% endif %}
+                                <a href="{{ url_for('edit_saved_chart', chart_id=chart.id) }}" class="btn btn-secondary btn-sm">ویرایش</a>
+                                <form class="chart-delete" method="post" action="{{ url_for('remove_saved_chart', chart_id=chart.id) }}">
+                                    <input type="hidden" name="chart" value="{{ sign_archive_delete(chart.id) }}">
+                                    <button type="button" class="btn btn-danger btn-sm" data-chart-name="{{ chart.name }}">حذف</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -36,11 +57,33 @@
         {% else %}
         <div class="empty-state">
             <span class="emoji">📭</span>
-            <h2 style="color:#fff">هنوز زایچه‌ای ذخیره نشده است</h2>
+            <h2>هنوز زایچه‌ای ذخیره نشده است</h2>
             <p>برای شروع، یک زایچه جدید محاسبه و ذخیره کنید.</p>
             <a href="/" class="btn btn-primary mt-2" style="width:auto">🔮 محاسبه زایچه جدید</a>
         </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.chart-list-actions form:not(.chart-delete)').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            const button = event.currentTarget.querySelector('button');
+            button.disabled = true;
+            button.textContent = 'در حال تهیهٔ جمع‌بندی…';
+        });
+    });
+
+    document.querySelectorAll('.chart-delete button').forEach((button) => {
+        button.addEventListener('click', () => {
+            const message = 'زایچهٔ «' + button.dataset.chartName + '» حذف شود؟ تحلیل ذخیره‌شدهٔ آن هم حذف می‌شود.';
+            if (window.confirm(message)) {
+                button.disabled = true;
+                button.form.requestSubmit();
+            }
+        });
+    });
+</script>
 {% endblock %}

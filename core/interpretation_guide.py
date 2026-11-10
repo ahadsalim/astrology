@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
+from core.course_interpretation import COURSE_PLACEMENTS
+from core.house_meanings import HOUSE_MEANINGS_FA
 from core.sign_qualities import SIGN_CHARACTER_FA
+from core.soltani_interpretation import (
+    SOLTANI_HOUSES,
+    SOLTANI_HOUSE_STATES,
+    SOLTANI_PLANETS,
+    SOLTANI_TOPICS,
+    soltani_house_note,
+)
 
 # --- Houses: classical themes + modern notes (merged legacy references) ---
 HOUSE_INTERPRETATIONS = [
@@ -356,7 +365,7 @@ ASPECT_RECEPTION = [
 
 ASPECT_SECONDARY = [
     ('نقل نور', 'سریع‌رو قبل از انفصال از بطیء، با سومی اتصال دهد → نور بطیء را منتقل می‌کند'),
-    ('جمع نور', 'سریع‌رو نور دو بطیء را جمع و هم‌جهت می‌کند'),
+    ('جمع نور', 'دو کوکب سریع‌تر به کوکب کندتری نظر می‌دهند و کوکب کندتر نور هر دو را دریافت می‌کند'),
     ('منع نور', 'کوکب ثالث بین فاعل و قابل → اتصال مستقیم باطل'),
     ('قطع نور', 'بطیء قوی بین سریع و متوسط → قطع اتصال (نه فقط تضعیف)'),
     ('انتکاث / مرادفه', 'رجعت قبل از اتصال = انتکاث؛ رجعت که اتصال بسازد = مرادفه'),
@@ -392,11 +401,11 @@ STRENGTH_PARAMETERS = [
 ]
 
 INTERPRETATION_PRINCIPLES = [
-    'آسیب کوکب = آسیب خانه: حاکم خانهٔ ضعیف/محترق، آن خانه را آسیب‌پذیر می‌کند.',
-    'مثال: خانه ۷ در ثور → حاکم زهره؛ زهره محترق → چالش در ازدواج (احتمال، نه حکم قطعی).',
-    'حاکم طالع ضعیف → ضعف خانه ۱ (جسم، بنیه، ظاهر).',
-    'نظرات سعد (مثلاً مشتری) می‌توانند ضعف را تعدیل کنند، نه بی‌اثر کنند.',
-    'روش کار: حال کواکب → خانه‌ها → حاکمیت‌ها → جمع قرائن.',
+    'از موضوع و خانهٔ مربوط شروع کنید. کوکب حاضر نشان می‌دهد چه گرایشی در آن حوزه برجسته است.',
+    'حاکم خانه را از برجِ ابتدای آن پیدا کنید. برای خانهٔ خالی، برج، حاکم و اتصالات حاکم را بررسی کنید.',
+    'حضور کوکب در یک خانه را از حاکمیت آن بر خانه‌ای دیگر جدا کنید. مثلاً اگر ابتدای خانهٔ هفتم در ثور است، وضعیت زهره برای آن خانه اهمیت دارد، حتی اگر زهره جای دیگری باشد.',
+    'کرامت، قوت خانه، روز یا شب بودن، وضعیت شمس، حرکت و اتصالات را کنار هم بخوانید.',
+    'برداشت از یک جایگاه اقتضایی است و به‌تنهایی نتیجهٔ قطعی دربارهٔ زندگی فرد نمی‌دهد.',
 ]
 
 # --- Triplicity lords per house ---
@@ -422,6 +431,22 @@ TRIPLICITY_INTERPRETATION_NOTE = (
 )
 
 
+def format_planet_house_summary(planet_name: str, house: int | str) -> str:
+    """Concise, source-scoped interpretation for a planet in a natal house."""
+    house_topic = HOUSE_MEANINGS_FA.get(house)
+    if not house_topic:
+        return ''
+    chapter = COURSE_PLACEMENTS.get(planet_name)
+    if chapter:
+        summary = chapter[2][house - 1]
+    else:
+        planet = next((entry for entry in PLANET_INTERPRETATIONS if entry['name'] == planet_name), None)
+        if not planet:
+            return ''
+        summary = f'{planet["role"]} را در زمینهٔ «{house_topic}» بررسی کنید.'
+    return f'{planet_name} در خانهٔ {house}: {summary}\n{soltani_house_note(planet_name, house)}'
+
+
 def _guide_table(headers: list[str], rows: list[list[str]], *, table_class: str = '') -> str:
     cls = f'interp-guide-table {table_class}'.strip()
     head = ''.join(f'<th>{h}</th>' for h in headers)
@@ -435,15 +460,20 @@ def render_interpretation_guide_html() -> str:
     """Full HTML body for the interpretation guide modal."""
     parts: list[str] = []
 
-    parts.append('<p class="interp-guide-intro">')
     parts.append(
-        'راهنمای فشردهٔ تفسیر خانه‌ها و کواکب و بروج<br>'
-        'شامل عقده‌ها، اتصالات، احتراق/تشریق، و سنجش قوت.<br>'
-        'هیچ نشانه‌ای به‌تنهایی کافی نیست؛ کرامت، خانه، حاکمیت و اتصالات را با هم ببینید.'
+        '<nav class="interp-guide-nav" aria-label="بخش‌های راهنما">'
+        '<a href="#interpCourseBasics">مبانی تفسیر</a>'
+        '<a href="#interpCoursePlacements">کواکب در خانه‌ها</a>'
+        '<a href="#interpSoltani">موضوعات تکمیلی تفسیر</a>'
+        '</nav>'
     )
-    parts.append('</p>')
-
-    parts.append('<h3 class="interp-guide-section">📐 قواعد کلی تفسیر</h3>')
+    parts.append('<h3 class="interp-guide-section" id="interpCourseBasics">مبانی تفسیر</h3>')
+    parts.append(
+        '<p class="interp-guide-note">برج، تقسیم‌بندی دایرةالبروج است و خانه به افق و زمان و مکان تولد مربوط است. '
+        'خوانش اصلی این زایچه اعتدالی و خانه‌بندی آن پلاسیدیوس است. درجات ودایی جداگانه در دستگاه نجمی '
+        'با آیانامسای لاهیری سنجیده می‌شوند.</p>'
+    )
+    parts.append('<h4 class="interp-guide-sub">ترتیب خواندن زایچه</h4>')
     for rule in INTERPRETATION_PRINCIPLES:
         parts.append(f'<p class="interp-guide-note">• {rule}</p>')
     strength_rows = [[p[0], p[1]] for p in STRENGTH_PARAMETERS]
@@ -455,6 +485,12 @@ def render_interpretation_guide_html() -> str:
         for h in HOUSE_INTERPRETATIONS
     ]
     parts.append(_guide_table(['خانه', 'نام', 'موضوعات', 'منفی / هشدار'], house_rows, table_class='interp-houses'))
+
+    parts.append(
+        '<p class="interp-guide-note">اوتاد، خانه‌های ۱، ۴، ۷ و ۱۰ هستند. محور ۱ و ۷ استقلال و رابطه، و محور ۴ و ۱۰ '
+        'زندگی خصوصی و نقش عمومی را کنار هم می‌گذارد. در خانهٔ ۳ بر آموزش و ارتباط نزدیک، '
+        'در خانهٔ ۹ بر معرفت عمیق و سفر دور، و در خانه‌های ۵ و ۱۱ به‌ترتیب بر خلاقیت شخصی و همکاری جمعی توجه کنید.</p>'
+    )
 
     parts.append('<h3 class="interp-guide-section">🪐 کواکب — حُظوظ (مثبت / منفی)</h3>')
     planet_rows = [
@@ -512,6 +548,14 @@ def render_interpretation_guide_html() -> str:
     for rule in ASPECT_RULES:
         parts.append(f'<p class="interp-guide-note">• {rule}</p>')
 
+    parts.append('<h4 class="interp-guide-sub">اتصال به محل</h4>')
+    parts.append(
+        '<p class="interp-guide-note">اتفاق قوت، تقارن طول‌ها نسبت به محور اعتدالین (حمل و میزان) است. '
+        'اتفاق طریقت، تقارن نسبت به محور انقلابین (سرطان و جدی) است. برای نمونه، ۱۵° جوزا و ۱۵° سرطان '
+        'اتفاق طریقت دارند. تعریف این رابطه بر تقارن دقیق استوار است. جدول برنامه '
+        'فاصله‌های کمتر از ۱° را هم با دقیقه و ثانیه نشان می‌دهد.</p>'
+    )
+
     parts.append('<h4 class="interp-guide-sub">پذیرش نظر (مقبول / نامقبول)</h4>')
     reception_rows = [[r[0], r[1]] for r in ASPECT_RECEPTION]
     parts.append(_guide_table(['نوع', 'معنی'], reception_rows, table_class='interp-reception'))
@@ -536,6 +580,59 @@ def render_interpretation_guide_html() -> str:
             table_class='interp-triplicity-houses',
         )
     )
+
+    parts.append('<h3 class="interp-guide-section">کرامت، درجات ودایی و ابزارهای تکمیلی</h3>')
+    parts.append(_guide_table(['موضوع', 'روش خواندن'], [
+        ['کرامت و درجات شرف و هبوط',
+         'سروری و وبال به برجِ خانهٔ کوکب و برج مقابل آن مربوط‌اند. شرف و هبوط درجه‌ای را از شرف و هبوط برجی جدا بخوانید. '
+         'جدول برنامه درجهٔ شرف و هبوط را با نماد ° و فاصلهٔ حداکثر ۱° از درجهٔ مرجع نشان می‌دهد.'],
+        ['حد، وجه و مستولی',
+         'حد، بخش نامساوی برج است و وجه یک‌سوم ده‌درجه‌ای آن. در تعیین مستولی، حظ‌های چندگانهٔ همان درجه را '
+         'کنار هم می‌سنجند. وضعیت خودِ صاحب حد یا وجه نیز اهمیت دارد.'],
+        ['درجات ودایی',
+         'وارگوتاما یعنی برابری برج اصلی و برج نُه‌بهر. پوشکار ناوامشا جایگاه مساعد نُه‌بهر، آشتامشا نسبت هشتم '
+         'و گاندانتا ناحیهٔ مرزی آب و آتش است. این نشانه‌ها در کنار قرائن اعتدالی خوانده می‌شوند.'],
+        ['گرفتگی و زمان‌بندی',
+         'اجتماع و استقبال نزدیک عقده‌ها را برای بررسی کسوف و خسوف از اجتماع و استقبال عادی جدا کنید. '
+         'داشا برای دوره‌های بلندتر و ترانزیت برای تغییرات کوتاه‌مدت بررسی می‌شود.'],
+        ['سهام',
+         'سهم نقطه‌ای محاسباتی روی دایرةالبروج است. در خواندن آن، برج، خانه، حاکم یا مستولی درجه و '
+         'نظرها به خود سهم را بررسی کنید.'],
+    ]))
+
+    parts.append('<h3 class="interp-guide-section" id="interpCoursePlacements">کواکب در خانه‌ها</h3>')
+    for title, _, summaries in COURSE_PLACEMENTS.values():
+        rows = [[str(house), HOUSE_MEANINGS_FA[house], summary] for house, summary in enumerate(summaries, 1)]
+        parts.append(
+            f'<details class="interp-course-placement"><summary>{title} در ۱۲ خانه</summary>'
+            f'{_guide_table(["خانه", "حوزه", "خلاصهٔ جایگاه"], rows, table_class="interp-placement-table")}'
+            '</details>'
+        )
+
+    parts.append('<h3 class="interp-guide-section" id="interpSoltani">موضوعات تکمیلی تفسیر</h3>')
+    house_rows = [[str(number), *details] for number, details in SOLTANI_HOUSES.items()]
+    planet_rows = [[name, role, temperament] for name, (role, temperament, _) in SOLTANI_PLANETS.items()]
+    state_rows = [
+        [name, *(str(house) for house in houses)]
+        for name, (_, _, houses) in SOLTANI_PLANETS.items()
+    ]
+    parts.append(
+        '<details class="interp-course-placement" id="interpSoltaniHouses">'
+        '<summary>دوازده خانه و فرح، ترح، قوت و ضعف کواکب</summary>'
+        '<p class="interp-guide-note">'
+        'فرح و ترح با قوت و ضعف خانه یکی نیستند. نسبت‌های بدنی این جدول اصطلاحات تاریخی‌اند.</p>'
+        + _guide_table(['خانه', 'نام سنتی', 'موضوع‌ها', 'نسبت بدنی'], house_rows)
+        + _guide_table(['کوکب', 'منسوبات', 'طبع'], planet_rows)
+        + _guide_table(['کوکب', *SOLTANI_HOUSE_STATES], state_rows)
+        + '</details>'
+    )
+    for section, entries in SOLTANI_TOPICS:
+        rows = [[topic, summary] for topic, _, summary in entries]
+        parts.append(
+            f'<details class="interp-course-placement interp-soltani-topic"><summary>{section}</summary>'
+            f'{_guide_table(["موضوع", "خلاصه"], rows)}'
+            '</details>'
+        )
 
     return '\n'.join(parts)
 

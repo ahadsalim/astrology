@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import combinations
 from typing import Dict, Optional
 
 # Mean daily motion rank (lower = faster). Used when speeds are tied or missing.
@@ -131,6 +132,49 @@ def get_aspect_phase(
     if orb_future > orb_now + 1e-5:
         return 'separating'
     return 'unknown'
+
+
+LOCAL_ASPECT_ORB = 1.0  # Exclusive upper bound, in degrees.
+LOCAL_ASPECT_ROUNDOFF = 1e-9
+LOCAL_ASPECT_AXES = (
+    ('اتفاق قوت', 0, 11),
+    ('اتفاق طریقت', 180, 5),
+)
+
+
+def calculate_local_aspects(points: Dict) -> list[Dict]:
+    """Tropical longitude reflections (al-Tafhim pp. 347–348 and 480)."""
+    results = []
+    for (key1, first), (key2, second) in combinations(points.items(), 2):
+        if {key1, key2} == {'NorthNode', 'SouthNode'}:
+            continue
+        lon1 = first['longitude'] % 360
+        lon2 = second['longitude'] % 360
+        if lon1 == lon2:
+            continue
+
+        sign_sum = (int(lon1 // 30) + int(lon2 // 30)) % 12
+        for label, target_sum, paired_sign_sum in LOCAL_ASPECT_AXES:
+            offset = (lon1 + lon2 - target_sum + 180) % 360 - 180
+            orb = abs(offset)
+            exact = orb <= LOCAL_ASPECT_ROUNDOFF
+            # Exact contacts on an axis can fall on the first degree of both signs.
+            if orb >= LOCAL_ASPECT_ORB or (not exact and sign_sum != paired_sign_sum):
+                continue
+
+            sum_speed = first.get('speed', 0.0) + second.get('speed', 0.0)
+            phase = 'unknown'
+            if exact:
+                phase = 'exact'
+            elif abs(sum_speed) > 1e-5:
+                phase = 'applying' if offset * sum_speed < 0 else 'separating'
+            results.append({
+                'pair_fa': f"{first['name_fa']} / {second['name_fa']}",
+                'type_fa': label,
+                'phase_fa': ASPECT_PHASE_FA[phase],
+                'orb': 0.0 if exact else orb,
+            })
+    return sorted(results, key=lambda result: result['orb'])
 
 
 def get_aspect_caster_receiver(
