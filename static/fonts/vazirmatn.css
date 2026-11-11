@@ -1,24 +1,13 @@
-/* Vazirmatn Font - Local Version */
+/* Vazirmatn variable font, self-hosted.
+   Source: rastikerdar/vazirmatn v33.003
+   https://github.com/rastikerdar/vazirmatn/releases/download/v33.003/vazirmatn-v33.003.zip
+   Original file: fonts/webfonts/Vazirmatn[wght].woff2
+   License: OFL.txt (SIL Open Font License 1.1) */
 @font-face {
-  font-family: 'Vazirmatn';
+  font-family: "Vazirmatn";
+  src: url("Vazirmatn-Variable.woff2") format("woff2 supports variations"),
+       url("Vazirmatn-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
   font-style: normal;
-  font-weight: 400;
   font-display: swap;
-  src: url('Vazirmatn-Regular.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Vazirmatn';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('Vazirmatn-Medium.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Vazirmatn';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('Vazirmatn-Bold.woff2') format('woff2');
 }

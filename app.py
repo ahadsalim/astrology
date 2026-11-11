@@ -1,9 +1,17 @@
 import json
 import logging
+import mimetypes
 import secrets
 from urllib.parse import urlsplit
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, abort, make_response, session, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, abort, make_response, send_from_directory, session, flash
+
+# Slim production images sometimes ship without these mappings. Browsers
+# reject an SVG favicon or a woff2 file when the type is generic.
+mimetypes.add_type("image/svg+xml", ".svg")
+mimetypes.add_type("image/vnd.microsoft.icon", ".ico")
+mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("font/ttf", ".ttf")
 from itsdangerous import BadData, URLSafeTimedSerializer
 from config import Config
 from utils import InputValidator, ValidationError, AstroCalculator
@@ -89,6 +97,16 @@ def dms_arc_filter(value):
         return format_arc_dms(float(value))
     except (TypeError, ValueError):
         return '—'
+
+
+@app.route("/favicon.ico")
+def favicon():
+    """Browsers request /favicon.ico even when the page declares another icon."""
+    return send_from_directory(
+        app.static_folder,
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
 
 
 @app.route("/")

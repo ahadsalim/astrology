@@ -1,33 +1,8 @@
 /* ==========================================================================
-   Nojoom — Shared light theme
+   Nojum Ahkami — Shared light theme
    RTL Persian astrology web app
+   Vazirmatn is loaded from static/fonts/vazirmatn.css (self-hosted).
    ========================================================================== */
-
-/* Local Persian font (Vazirmatn) with CDN fallback */
-@font-face {
-  font-family: 'Vazirmatn';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/static/fonts/Vazirmatn-Regular.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Vazirmatn';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/static/fonts/Vazirmatn-Medium.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Vazirmatn';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/static/fonts/Vazirmatn-Bold.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
-}
 
 :root {
   --surface: #f7f9fc;
@@ -65,10 +40,21 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  font-family: "Vazirmatn", Tahoma, sans-serif;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
 
 body {
-  font-family: 'Vazirmatn', 'Tahoma', sans-serif;
   direction: rtl;
   color: var(--ink);
   line-height: 1.85;
@@ -425,7 +411,11 @@ button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: n
 .astro-table .ruler-column,
 .astro-table .compact-symbol-column { padding-inline: 4px; white-space: nowrap; }
 .astro-table .compact-text-heading { font-size: 0.75em; line-height: 1.25; padding-inline: 4px; }
-.table-glyph { font: 1.125rem/1 "Segoe UI Symbol", sans-serif; }
+.table-glyph {
+  font-family: "Vazirmatn", "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif;
+  font-size: 1.125rem;
+  line-height: 1;
+}
 .motion-retrograde { color: #a93226; }
 .ruler-symbol-key { color: var(--ink-dark); font-size: 0.85rem; }
 .ruler-symbol-key summary { cursor: pointer; }

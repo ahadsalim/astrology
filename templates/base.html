@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f5f7fb">
     <title>{% block title %}نجوم احکامی{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('favicon') }}" sizes="any">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='site-icon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/vazirmatn.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block head_extra %}{% endblock %}
 </head>

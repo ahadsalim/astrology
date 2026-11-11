@@ -7,14 +7,42 @@ Similar to ZET software visualization
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+import arabic_reshaper
+from bidi.algorithm import get_display
 import numpy as np
 import io
 import base64
+from pathlib import Path
 from typing import Dict
 import logging
 from utils.geo_format import format_arc_dms
 
 logger = logging.getLogger(__name__)
+
+_FONT_DIR = Path(__file__).resolve().parent.parent / "static" / "fonts"
+
+
+def vazir_font(size: float, *, bold: bool = False):
+    """Vazirmatn for Persian and Latin chart labels. Matplotlib cannot use woff2."""
+    filename = "Vazirmatn-Bold.ttf" if bold else "Vazirmatn-Regular.ttf"
+    path = _FONT_DIR / filename
+    if path.is_file():
+        return font_manager.FontProperties(fname=str(path), size=size)
+    logger.warning("Vazirmatn file missing: %s", path)
+    return font_manager.FontProperties(size=size, weight="bold" if bold else "regular")
+
+
+def symbol_font(size: float):
+    """Astrology glyphs are not in Vazirmatn. DejaVu Sans ships with matplotlib."""
+    return font_manager.FontProperties(family="DejaVu Sans", size=size, weight="bold")
+
+
+def shape_persian(text: str) -> str:
+    """Join Arabic letters and put them in visual order for Matplotlib's LTR canvas."""
+    if not text:
+        return text
+    return get_display(arabic_reshaper.reshape(text))
 
 # Planet symbols (Unicode)
 PLANET_SYMBOLS = {
@@ -105,8 +133,8 @@ class ChartRenderer:
             mid_angle = np.radians(i * 30 + 15 - asc_degree_in_sign)
             self.ax.text(
                 mid_angle, 2.72, ZODIAC_SYMBOLS[zodiac_index],
-                ha='center', va='center', fontsize=14, weight='bold',
-                color='#1a252f', zorder=6,
+                ha='center', va='center', color='#1a252f', zorder=6,
+                fontproperties=symbol_font(14),
             )
 
         # Degree ticks every 10° on zodiac ring
@@ -145,8 +173,8 @@ class ChartRenderer:
 
             self.ax.text(
                 mid_angle, 1.45, str(house_num),
-                ha='center', va='center', fontsize=9, weight='bold',
-                color='#2c3e50',
+                ha='center', va='center', color='#2c3e50',
+                fontproperties=vazir_font(9, bold=True),
                 bbox=dict(
                     boxstyle='circle', facecolor='#ecf0f1',
                     edgecolor='#95a5a6', alpha=0.95, pad=0.3,
@@ -163,25 +191,25 @@ class ChartRenderer:
         asc_angle = 0
         self.ax.plot([asc_angle, asc_angle], [0, 3.0], color='#e74c3c', linewidth=2.8, alpha=0.9, zorder=9)
         self.ax.text(asc_angle, 3.08, 'ASC', ha='center', va='bottom',
-                     fontsize=11, weight='bold', color='#c0392b', zorder=10)
+                     color='#c0392b', zorder=10, fontproperties=vazir_font(11, bold=True))
 
         # DSC opposite ASC
         dsc_angle = np.pi
         self.ax.plot([dsc_angle, dsc_angle], [0, 3.0], color='#e74c3c', linewidth=1.2, alpha=0.45, zorder=9)
         self.ax.text(dsc_angle, 3.08, 'DSC', ha='center', va='bottom',
-                     fontsize=9, weight='bold', color='#c0392b', alpha=0.7, zorder=10)
+                     color='#c0392b', alpha=0.7, zorder=10, fontproperties=vazir_font(9, bold=True))
 
         mc_relative = (houses['midheaven']['longitude'] - asc_longitude) % 360
         mc_angle = np.radians(mc_relative)
         self.ax.plot([mc_angle, mc_angle], [0, 3.0], color='#27ae60', linewidth=2.8, alpha=0.9, zorder=9)
         self.ax.text(mc_angle, 3.08, 'MC', ha='center', va='bottom',
-                     fontsize=11, weight='bold', color='#1e8449', zorder=10)
+                     color='#1e8449', zorder=10, fontproperties=vazir_font(11, bold=True))
 
         ic_relative = (mc_relative + 180) % 360
         ic_angle = np.radians(ic_relative)
         self.ax.plot([ic_angle, ic_angle], [0, 3.0], color='#27ae60', linewidth=1.2, alpha=0.45, zorder=9)
         self.ax.text(ic_angle, 3.08, 'IC', ha='center', va='bottom',
-                     fontsize=9, weight='bold', color='#1e8449', alpha=0.7, zorder=10)
+                     color='#1e8449', alpha=0.7, zorder=10, fontproperties=vazir_font(9, bold=True))
 
     def _draw_planets(self):
         """Draw planets on the chart with simple overlap offset"""
@@ -215,7 +243,8 @@ class ChartRenderer:
 
             self.ax.text(
                 angle, radius, label,
-                ha='center', va='center', fontsize=12, weight='bold', color=color,
+                ha='center', va='center', color=color,
+                fontproperties=symbol_font(12),
                 bbox=dict(
                     boxstyle='round,pad=0.25', facecolor='#ffffff',
                     edgecolor=color, alpha=0.95, linewidth=1.2,
@@ -226,7 +255,8 @@ class ChartRenderer:
             degree_text = format_arc_dms(data['degree_in_sign'])
             self.ax.text(
                 angle, radius - 0.22, degree_text,
-                ha='center', va='center', fontsize=6.5, color='#555555', zorder=11,
+                ha='center', va='center', color='#555555', zorder=11,
+                fontproperties=vazir_font(6.5),
             )
 
     def _draw_nodes(self):
@@ -244,7 +274,8 @@ class ChartRenderer:
             angle = np.radians(relative)
             self.ax.text(
                 angle, 2.05, symbol,
-                ha='center', va='center', fontsize=12, weight='bold', color='#6c3483',
+                ha='center', va='center', color='#6c3483',
+                fontproperties=symbol_font(12),
                 bbox=dict(
                     boxstyle='round,pad=0.2', facecolor='#ffffff',
                     edgecolor='#8e44ad', alpha=0.95, linewidth=1.1,
@@ -273,8 +304,9 @@ class ChartRenderer:
         self._draw_nodes()
 
         self.fig.suptitle(
-            self._chart_title(),
-            fontsize=13, weight='bold', color='#2c3e50', y=0.97,
+            shape_persian(self._chart_title()),
+            color='#2c3e50', y=0.97,
+            fontproperties=vazir_font(13, bold=True),
         )
 
         buffer = io.BytesIO()
