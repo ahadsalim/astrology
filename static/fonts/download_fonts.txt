@@ -1,15 +1,8 @@
-لطفاً فونت‌های زیر را دانلود کنید:
+فونت وزیرمتن از قبل در همین پوشه است و از اینترنت بارگذاری نمی‌شود.
 
-1. Vazirmatn:
-   https://github.com/rastikerdar/vazirmatn/releases/latest
-   فایل‌های مورد نیاز: Vazirmatn-Regular.woff2, Vazirmatn-Medium.woff2, Vazirmatn-Bold.woff2
+منبع: انتشار رسمی v33.003
+https://github.com/rastikerdar/vazirmatn/releases/download/v33.003/vazirmatn-v33.003.zip
 
-2. Estedad (جایگزین):
-   از آنجایی که Estedad ممکن است در دسترس نباشد، از Vazirmatn برای همه استفاده می‌کنیم.
-
-یا می‌توانید از فونت‌های زیر که در دسترس‌تر هستند استفاده کنید:
-- IRANSans
-- Samim
-- Shabnam
-
-این فونت‌ها را در این پوشه قرار دهید.
+فایل وب: Vazirmatn-Variable.woff2
+فایل نمودار: Vazirmatn-Regular.ttf و Vazirmatn-Bold.ttf
+مجوز: OFL.txt

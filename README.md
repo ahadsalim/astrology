@@ -1,4 +1,4 @@
-# Nojoom Atlas
+# Nojum Ahkami (نجوم احکامی)
 
 Persian natal-chart and transit web app powered by **Swiss Ephemeris**. Built for real chart work: Jalali birth input, Iranian cities, house tables, aspects, chart-wheel rendering, and AI-assisted house-by-house interpretation.
 

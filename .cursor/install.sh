@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idempotent Cloud Agent bootstrap for the Nojoom Atlas Flask app.
+# Idempotent Cloud Agent bootstrap for the Nojum Ahkami Flask app.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
